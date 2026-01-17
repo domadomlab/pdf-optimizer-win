@@ -1,5 +1,10 @@
 # Changelog - PDF Optimizer Suite
 
+## [3.4.4] - 2026-01-17
+### Changed
+- **Repo Structure**: Moved `installer.nsi` inside the repository for better version control.
+- **Build Process**: Updated installer script to copy files relative to the project root, ensuring a cleaner build without accidental inclusion of `.git` or parent directory artifacts.
+
 ## [3.4.3] - 2026-01-17
 ### Fixed
 - **Uninstaller Update**: Added removal logic for the new "75 DPI" registry keys. The uninstaller now correctly cleans up all four menu entries (75, 150, 200, 300) from all registry locations.
