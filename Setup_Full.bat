@@ -1,85 +1,72 @@
 @echo off
 setlocal enabledelayedexpansion
-title PDF Optimizer Suite v3.1.4 - Setup & Diagnostics
+title PDF Optimizer Suite v3.2.9 - Setup
 
-set SEE_MASK_NOZONECHECKS=1
+:: Возврат к стабильным настройкам
 color 07
+set "LOG_DIR=%~1"
+if "%LOG_DIR%"=="" set "LOG_DIR=%TEMP%"
+set "LOG_FILE=%LOG_DIR%\pdf_optimizer_debug.log"
 
-set "RAW_LOG_DIR=%~1"
-if "!RAW_LOG_DIR!"=="" set "RAW_LOG_DIR=%TEMP%"
-set "LOG_FILE=!RAW_LOG_DIR!\pdf_optimizer_debug.log"
+echo Starting Installation v3.2.9...
+echo --- SETUP LOG v3.2.9 START --- >> "%LOG_FILE%"
 
-echo --- SETUP LOG v3.1.4 START --- >> "!LOG_FILE!"
-echo Date: %DATE% %TIME% >> "!LOG_FILE!"
+:: 1. Python
+echo [1/4] Checking Python status...
+echo [DEBUG] Checking for existing Python 3.12... >> "%LOG_FILE%"
 
-echo [1/4] Python Check...
-python --version 2>nul | findstr "3.12" >nul
-if %errorlevel% neq 0 (
-    if exist "%~dp0resources\python-installer.exe" (
-        echo      Installing Python...
-        start /wait "" "%~dp0resources\python-installer.exe" /quiet InstallAllUsers=1 PrependPath=1
-        echo [INFO] Python Install Exit Code: !errorlevel! >> "!LOG_FILE!"
-    )
-)
+:: Попытка определить версию
+python --version 2>> "%LOG_FILE%" | findstr "3.12" >nul
+set "PY_CHECK=%errorlevel%"
+echo [DEBUG] Python 3.12 check errorlevel: %PY_CHECK% >> "%LOG_FILE%"
 
-echo [2/4] Ghostscript Check...
-echo [DEBUG] Checking Ghostscript before install... >> "!LOG_FILE!"
-
-set "GS_FOUND=NO"
-gswin64c -version >nul 2>&1 && set "GS_FOUND=YES (PATH)"
-if "!GS_FOUND!"=="NO" (
-    reg query "HKLM\SOFTWARE\GPL Ghostscript" /ve >nul 2>&1 && set "GS_FOUND=YES (REG-GPL)"
-)
-if "!GS_FOUND!"=="NO" (
-    reg query "HKLM\SOFTWARE\Artifex\Ghostscript" /ve >nul 2>&1 && set "GS_FOUND=YES (REG-ARTIFEX)"
-)
-
-echo [INFO] GS Status before install: !GS_FOUND! >> "!LOG_FILE!"
-
-if "!GS_FOUND!"=="NO" (
-    if exist "%~dp0resources\gs-installer.exe" (
-        echo      Installing Ghostscript...
-        copy /y "%~dp0resources\gs-installer.exe" "%TEMP%\gs_setup.exe" >nul
-        echo [DEBUG] Running: %TEMP%\gs_setup.exe /S >> "!LOG_FILE!"
-        start /wait "" "%TEMP%\gs_setup.exe" /S
-        set "GS_EXIT=!errorlevel!"
-        echo [INFO] GS Install Exit Code: !GS_EXIT! >> "!LOG_FILE!"
-        del "%TEMP%\gs_setup.exe" /q
+if %PY_CHECK% neq 0 (
+    echo [DEBUG] Python 3.12 NOT found or version mismatch. Proceeding to install/repair. >> "%LOG_FILE%"
+    
+    set "INSTALLER=%~dp0resources\python-installer.exe"
+    if exist "!INSTALLER!" (
+        echo [DEBUG] Found installer at: !INSTALLER! >> "%LOG_FILE%"
+        echo [INFO] Installing/Repairing Python 3.12... >> "%LOG_FILE%"
         
-        :: Проверка после установки
-        set "GS_POST=FAIL"
-        if exist "C:\Program Files\gs" set "GS_POST=OK (Files exist)"
-        gswin64c -version >nul 2>&1 && set "GS_POST=OK (PATH works)"
-        echo [INFO] GS Status after install: !GS_POST! >> "!LOG_FILE!"
+        :: Сначала пробуем обычную установку/обновление. 
+        :: Если он уже есть, он может обновиться или потребовать Repair.
+        :: Добавляем /repair флаг в качестве альтернативы, если обычный запуск не помог, 
+        :: но проще всего использовать штатный инсталлер, он сам умеет в Repair если запущен повторно.
+        start /wait "" "!INSTALLER!" /quiet /repair InstallAllUsers=1 PrependPath=1
         
-        if "!GS_POST!"=="FAIL" (
-            echo [WARN] Ghostscript failed to install automatically. >> "!LOG_FILE!"
-            echo      ^> Warning: GS not detected after install.
-        )
+        echo [DEBUG] Python Installer/Repair finished. >> "%LOG_FILE%"
     ) else (
-        echo [ERROR] GS installer NOT FOUND in resources! >> "!LOG_FILE!"
+        echo [ERROR] Python installer NOT found at: !INSTALLER! >> "%LOG_FILE%"
     )
 ) else (
-    echo      Detected: !GS_FOUND!
+    echo [INFO] Python 3.12 is already installed. >> "%LOG_FILE%"
 )
 
-echo [3/4] ImageMagick Check...
+:: 2. Ghostscript (Прямая установка как в v3.0.9)
+echo [2/4] Ghostscript...
+gswin64c -version >nul 2>&1
+if %errorlevel% neq 0 (
+    if exist "%~dp0resources\gs-installer.exe" (
+        start /wait "" "%~dp0resources\gs-installer.exe" /S
+    )
+)
+
+:: 3. ImageMagick
+echo [3/4] ImageMagick...
 magick -version >nul 2>&1
 if %errorlevel% neq 0 (
     if exist "%~dp0resources\ImageMagick-Installer.exe" (
-        echo      Installing ImageMagick...
         start /wait "" "%~dp0resources\ImageMagick-Installer.exe" /VERYSILENT /TASKS="legacy_support,add_path"
-        echo [INFO] ImageMagick Install Exit Code: !errorlevel! >> "!LOG_FILE!"
     )
 )
 
-echo [4/4] Registry Integration...
-call "%~dp0install\install.bat" "!LOG_FILE!"
+:: 4. Registry
+echo [4/4] Registry...
+call "%~dp0install\install.bat" "%LOG_FILE%"
 
 echo Finalizing...
+echo --- SETUP LOG v3.3.4 END --- >> "%LOG_FILE%"
+
+:: Force UI Refresh
 taskkill /f /im explorer.exe >nul 2>&1
 start explorer.exe
-
-echo --- SETUP LOG v3.1.4 END --- >> "!LOG_FILE!"
-echo Setup Finished.
-timeout /t 3

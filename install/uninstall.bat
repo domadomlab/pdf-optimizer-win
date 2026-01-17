@@ -8,6 +8,7 @@ set SEE_MASK_NOZONECHECKS=1
 :: 1. CLEAN REGISTRY
 set "PATHS=HKLM\SOFTWARE\Classes\SystemFileAssociations\.pdf\shell HKLM\SOFTWARE\Classes\.pdf\shell HKLM\SOFTWARE\Classes\*\shell"
 for %%P in (%PATHS%) do (
+    reg delete "%%P\PDFOptimizer75" /f >nul 2>&1
     reg delete "%%P\PDFOptimizer150" /f >nul 2>&1
     reg delete "%%P\PDFOptimizer200" /f >nul 2>&1
     reg delete "%%P\PDFOptimizer300" /f >nul 2>&1
