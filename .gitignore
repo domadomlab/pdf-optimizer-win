@@ -1,0 +1,13 @@
+# Python
+__pycache__/
+*.pyc
+
+# Logs
+*.log
+
+# Generated Installers (artifacts)
+PDF_Optimizer_Suite_*.exe
+
+# System
+Thumbs.db
+Desktop.ini
