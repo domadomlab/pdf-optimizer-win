@@ -104,30 +104,46 @@ for %%K in (%PATHS_TO_NUKE%) do (
 
 :: --- 3. QUADRUPLE REGISTRATION (HKLM + HKCU Sys + HKCU Direct + ALL FILES TEST) ---
 echo Registering entries... >> "!LOG_FILE!"
+set "LANG_CODE=%~2"
 
-:: Определяем корни для регистрации
-set "ROOTS=HKLM\SOFTWARE\Classes\SystemFileAssociations\.pdf\shell HKCU\Software\Classes\SystemFileAssociations\.pdf\shell HKCU\Software\Classes\.pdf\shell"
+:: Определяем названия на основе языка
+if /i "%LANG_CODE%"=="RU" (
+    echo [INFO] Installing Russian Context Menu... >> "!LOG_FILE!"
+    set "NAME_75=PDF: Эко (75 dpi)"
+    set "NAME_150=PDF: Почта (150 dpi)"
+    set "NAME_200=PDF: Печать (200 dpi)"
+    set "NAME_300=PDF: Качество (300 dpi)"
+) else (
+    echo [INFO] Installing English Context Menu... >> "!LOG_FILE!"
+    set "NAME_75=PDF: Eco (75 dpi)"
+    set "NAME_150=PDF: Email (150 dpi)"
+    set "NAME_200=PDF: Print (200 dpi)"
+    set "NAME_300=PDF: High (300 dpi)"
+)
+
+:: Добавляем "All Files" (*) для диагностики. Если меню появится везде - проблема в привязке к .pdf
+set "ROOTS=HKLM\SOFTWARE\Classes\SystemFileAssociations\.pdf\shell HKCU\Software\Classes\SystemFileAssociations\.pdf\shell HKCU\Software\Classes\.pdf\shell HKCU\Software\Classes\*\shell"
 
 for %%R in (%ROOTS%) do (
     echo   Registering in %%R... >> "!LOG_FILE!"
     
     :: 75 (NEW)
-    reg add "%%R\PDFOptimizer75" /ve /d "PDF: Eco (75 dpi)" /f >nul
+    reg add "%%R\PDFOptimizer75" /ve /d "!NAME_75!" /f >nul
     reg add "%%R\PDFOptimizer75" /v "Icon" /d "shell32.dll,166" /f >nul
     reg add "%%R\PDFOptimizer75\command" /ve /d "\"%PY_EXE%\" \"%RAW_SCRIPT%\" 75 \"%%1\"" /f >nul
 
     :: 150
-    reg add "%%R\PDFOptimizer150" /ve /d "PDF: Email (150 dpi)" /f >nul
+    reg add "%%R\PDFOptimizer150" /ve /d "!NAME_150!" /f >nul
     reg add "%%R\PDFOptimizer150" /v "Icon" /d "shell32.dll,166" /f >nul
     reg add "%%R\PDFOptimizer150\command" /ve /d "\"%PY_EXE%\" \"%RAW_SCRIPT%\" 150 \"%%1\"" /f >nul
 
     :: 200
-    reg add "%%R\PDFOptimizer200" /ve /d "PDF: Print (200 dpi)" /f >nul
+    reg add "%%R\PDFOptimizer200" /ve /d "!NAME_200!" /f >nul
     reg add "%%R\PDFOptimizer200" /v "Icon" /d "shell32.dll,166" /f >nul
     reg add "%%R\PDFOptimizer200\command" /ve /d "\"%PY_EXE%\" \"%RAW_SCRIPT%\" 200 \"%%1\"" /f >nul
 
     :: 300
-    reg add "%%R\PDFOptimizer300" /ve /d "PDF: High (300 dpi)" /f >nul
+    reg add "%%R\PDFOptimizer300" /ve /d "!NAME_300!" /f >nul
     reg add "%%R\PDFOptimizer300" /v "Icon" /d "shell32.dll,166" /f >nul
     reg add "%%R\PDFOptimizer300\command" /ve /d "\"%PY_EXE%\" \"%RAW_SCRIPT%\" 300 \"%%1\"" /f >nul
 )

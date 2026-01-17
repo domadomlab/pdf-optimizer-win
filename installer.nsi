@@ -6,7 +6,7 @@
 ;General
 
   Name "PDF Optimizer Suite"
-  OutFile "PDF_Optimizer_Suite_v3.4.4_Installer.exe"
+  OutFile "PDF_Optimizer_Suite_v3.5.0_Installer.exe"
   InstallDir "$PROGRAMFILES64\DomCorp\PDFOptimizer"
   InstallDirRegKey HKCU "Software\DomCorp\PDFOptimizer" ""
   RequestExecutionLevel admin
@@ -21,6 +21,9 @@
   !define MUI_ABORTWARNING
   !define MUI_ICON "${NSISDIR}\Contrib\Graphics\Icons\modern-install.ico"
   !define MUI_UNICON "${NSISDIR}\Contrib\Graphics\Icons\modern-uninstall.ico"
+  
+  ; Language Selection Dialog Settings
+  !define MUI_LANGDLL_ALLLANGUAGES
 
 ;--------------------------------
 ;Pages
@@ -40,6 +43,7 @@
 ;--------------------------------
 ;Languages
 
+  !insertmacro MUI_LANGUAGE "English"
   !insertmacro MUI_LANGUAGE "Russian"
 
 ;--------------------------------
@@ -79,9 +83,16 @@ SectionEnd
 Section "Configuration & Dependencies" SecSetup
   SetOutPath "$INSTDIR"
   DetailPrint "Running Full Setup (Python, ImageMagick, Context Menu)..."
-  ; Передаем $EXEDIR как аргумент для логирования установки
+  
+  ; Определяем код языка для передачи в батник
+  StrCpy $R1 "EN" ; Default to English
+  ${If} $LANGUAGE == 1049
+    StrCpy $R1 "RU"
+  ${EndIf}
+  
+  ; Передаем $EXEDIR как аргумент для логирования и $R1 как язык (RU/EN)
   ; Используем nsExec::ExecToLog чтобы видеть вывод консоли прямо в окне установки
-  nsExec::ExecToLog '"$INSTDIR\Setup_Full.bat" "$EXEDIR"'
+  nsExec::ExecToLog '"$INSTDIR\Setup_Full.bat" "$EXEDIR" "$R1"'
 SectionEnd
 
 ;--------------------------------
@@ -89,6 +100,8 @@ SectionEnd
 
   LangString DESC_SecCore ${LANG_RUSSIAN} "Основные файлы программы, лицензии и скрипты."
   LangString DESC_SecSetup ${LANG_RUSSIAN} "Автоматическая настройка: проверка/установка Python 3.12, ImageMagick и регистрация в контекстном меню."
+  LangString DESC_SecCore ${LANG_ENGLISH} "Core program files, licenses, and scripts."
+  LangString DESC_SecSetup ${LANG_ENGLISH} "Auto-setup: Checks/Installs Python 3.12, ImageMagick, and registers context menu."
 
   !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
     !insertmacro MUI_DESCRIPTION_TEXT ${SecCore} $(DESC_SecCore)
@@ -99,6 +112,9 @@ SectionEnd
 ;Functions
 
 Function .onInit
+  ; Show Language Selection Dialog
+  !insertmacro MUI_LANGDLL_DISPLAY
+
   ; Check for previous installation
   ReadRegStr $R0 HKCU "Software\DomCorp\PDFOptimizer" ""
   StrCmp $R0 "" check_hklm
@@ -112,7 +128,7 @@ Function .onInit
   IfFileExists "$R0\uninstall.exe" 0 done
   
   ; Notify user (optional, but polite)
-  MessageBox MB_OK|MB_ICONINFORMATION "Обнаружена предыдущая версия программы. Она будет удалена перед установкой."
+  MessageBox MB_OK|MB_ICONINFORMATION "Previous version detected. It will be uninstalled before proceeding."
   
   ; Run uninstaller silently
   ; _?=$R0 forces the uninstaller to run from the installed dir but wait correctly

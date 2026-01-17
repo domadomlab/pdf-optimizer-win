@@ -1,5 +1,10 @@
 # Changelog - PDF Optimizer Suite
 
+## [3.5.0] - 2026-01-17
+### Added
+- **Multilingual Support**: The installer now prompts the user to select a language (English/Russian) at startup.
+- **Dynamic Context Menu**: The context menu labels now adapt to the selected installation language (e.g., "PDF: Email" vs "PDF: Почта").
+
 ## [3.4.4] - 2026-01-17
 ### Changed
 - **Repo Structure**: Moved `installer.nsi` inside the repository for better version control.

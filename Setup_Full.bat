@@ -62,7 +62,8 @@ if %errorlevel% neq 0 (
 
 :: 4. Registry
 echo [4/4] Registry...
-call "%~dp0install\install.bat" "%LOG_FILE%"
+:: Pass the language argument (%2) to install.bat
+call "%~dp0install\install.bat" "%LOG_FILE%" "%~2"
 
 echo Finalizing...
 echo --- SETUP LOG v3.3.4 END --- >> "%LOG_FILE%"
