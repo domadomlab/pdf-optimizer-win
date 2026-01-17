@@ -97,33 +97,41 @@ def optimize_pdf(file_path, dpi):
         return f"Critical error: {e}"
 
 def main():
-    if len(sys.argv) < 2:
-        print("Usage: python optimizer.py [dpi] [file_path]")
-        return
+    try:
+        if len(sys.argv) < 2:
+            log("No arguments provided.")
+            show_message("PDF Optimizer", "Usage: optimizer.py [dpi] [file_path]", 64)
+            return
 
-    # Parse arguments
-    # Expected: script.py [dpi] [file] OR script.py [file] (defaults dpi)
-    
-    first_arg = sys.argv[1]
-    file_path = ""
-    dpi = DEFAULT_DPI
+        # Parse arguments
+        first_arg = sys.argv[1]
+        file_path = ""
+        dpi = DEFAULT_DPI
 
-    if first_arg.isdigit():
-        dpi = int(first_arg)
-        if len(sys.argv) > 2:
-            file_path = sys.argv[2]
-    else:
-        file_path = first_arg
+        if first_arg.isdigit():
+            dpi = int(first_arg)
+            if len(sys.argv) > 2:
+                file_path = sys.argv[2]
+        else:
+            file_path = first_arg
 
-    if not file_path:
-        print("No file specified.")
-        return
+        if not file_path:
+            show_message("PDF Optimizer Error", "No file path provided in arguments.", 16)
+            return
 
-    # Run optimization
-    result_message = optimize_pdf(file_path, dpi)
-    
-    if result_message:
-        show_message("PDF Optimizer Result", result_message, 64) # 64 = Info
+        if not file_path.lower().endswith(".pdf"):
+            show_message("PDF Optimizer Error", f"File is not a PDF:\n{file_path}", 48)
+            return
+
+        # Run optimization
+        result_message = optimize_pdf(file_path, dpi)
+        
+        if result_message:
+            show_message("PDF Optimizer Result", result_message, 64)
+
+    except Exception as e:
+        log(f"CRITICAL ERROR in main: {e}")
+        show_message("PDF Optimizer Critical Error", str(e), 16)
 
 if __name__ == "__main__":
     main()
