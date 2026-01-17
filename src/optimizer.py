@@ -2,136 +2,93 @@ import sys
 import os
 import subprocess
 import shutil
-import ctypes # For MessageBox
+import ctypes
 from datetime import datetime
 
-# --- Configuration ---
-DEFAULT_DPI = 200
-LOG_FILE = os.path.join(os.environ.get('TEMP', 'C:\\Temp'), 'pdf_optimizer.log')
+# Папка, где лежит скрипт
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+CONFIG_FILE = os.path.join(BASE_DIR, "log_config.txt")
+
+# По умолчанию логи в ту же папку, где скрипт
+LOG_DIR = BASE_DIR
+
+# Пытаемся прочитать путь к инсталлеру (место для логов)
+if os.path.exists(CONFIG_FILE):
+    try:
+        # NSIS пишет в системной кодировке (обычно cp1251 или utf-8)
+        with open(CONFIG_FILE, "r", encoding="utf-8", errors="ignore") as f:
+            saved_path = f.read().strip()
+            if os.path.isdir(saved_path):
+                LOG_DIR = saved_path
+    except:
+        LOG_DIR = os.environ.get('TEMP', BASE_DIR)
+
+LOG_FILE = os.path.join(LOG_DIR, 'pdf_optimizer_debug.log')
 
 def log(message):
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    formatted_message = f"[{timestamp}] {message}"
+    msg = f"[{timestamp}] {message}\n"
     try:
+        # Пробуем записать. Если не удается (нет прав), пишем в Temp
         with open(LOG_FILE, "a", encoding="utf-8") as f:
-            f.write(formatted_message + "\n")
-    except Exception:
-        pass # Fail silently on logging errors
-    print(formatted_message)
+            f.write(msg)
+    except:
+        try:
+            temp_log = os.path.join(os.environ.get('TEMP', 'C:\\Temp'), 'pdf_optimizer_backup.log')
+            with open(temp_log, "a", encoding="utf-8") as f:
+                f.write(f"Fallback Log (Original failed): {msg}")
+        except: pass
 
-def show_message(title, text, style=0):
-    # Styles: 0=OK, 1=OK/Cancel, 48=Warning, 64=Info
-    try:
-        ctypes.windll.user32.MessageBoxW(0, text, title, style)
-    except Exception as e:
-        log(f"Error showing message box: {e}")
+def find_tool(tool_name, registry_path=None):
+    path = shutil.which(tool_name)
+    if path: return path
+    if registry_path:
+        try:
+            import winreg
+            for root in [winreg.HKEY_LOCAL_MACHINE, winreg.HKEY_CURRENT_USER]:
+                try:
+                    key = winreg.OpenKey(root, registry_path)
+                    val, _ = winreg.QueryValueEx(key, "BinPath")
+                    full_path = os.path.join(val, f"{tool_name}.exe")
+                    if os.path.exists(full_path): return full_path
+                except: continue
+        except: pass
+    return None
 
 def optimize_pdf(file_path, dpi):
-    if not os.path.exists(file_path):
-        log(f"File not found: {file_path}")
-        return False
-
-    directory = os.path.dirname(file_path)
-    filename = os.path.basename(file_path)
-    name, ext = os.path.splitext(filename)
+    log(f"--- SESSION START v3.0.3: {file_path} ---")
     
-    output_filename = f"{name}_{dpi}dpi{ext}"
-    output_path = os.path.join(directory, output_filename)
+    gs_exe = find_tool("gswin64c") or find_tool("gswin32c")
+    if gs_exe:
+        os.environ["PATH"] += os.pathsep + os.path.dirname(gs_exe)
+        log(f"GS found: {gs_exe}")
 
-    log(f"Processing: {filename} -> {output_filename} @ {dpi} DPI")
+    magick_exe = find_tool("magick", r"Software\ImageMagick\Current")
+    if not magick_exe:
+        log("ERROR: ImageMagick not found.")
+        return "ImageMagick not found."
 
-    # Check for ImageMagick
-    magick_cmd = "magick"
-    if not shutil.which(magick_cmd):
-        # Try legacy 'convert' if 'magick' is not found, though on Windows 'convert' is often system tool
-        # Better to rely on 'magick' being in PATH from modern ImageMagick installers
-        log("Error: 'magick' command not found. Please install ImageMagick.")
-        show_message("PDF Optimizer Error", "ImageMagick ('magick' command) not found in PATH.\nPlease install ImageMagick for Windows.", 16) # 16 = Critical Error
-        return False
-
-    # Construct command
-    # convert -density {dpi} -units PixelsPerInch "{input}" -alpha remove -alpha off -compress jpeg -quality 80 +profile "*" "{output}"
-    cmd = [
-        magick_cmd,
-        "-density", str(dpi),
-        "-units", "PixelsPerInch",
-        file_path,
-        "-alpha", "remove",
-        "-alpha", "off",
-        "-compress", "jpeg",
-        "-quality", "80",
-        "+profile", "*",
-        output_path
-    ]
+    output_path = f"{os.path.splitext(file_path)[0]}_{dpi}dpi.pdf"
+    cmd = [magick_exe, "-density", str(dpi), "-units", "PixelsPerInch", file_path, 
+           "-alpha", "remove", "-alpha", "off", "-compress", "jpeg", "-quality", "80", "+profile", "*", output_path]
 
     try:
-        # Run subprocess, hiding the console window if possible
-        startupinfo = None
-        if os.name == 'nt':
-            startupinfo = subprocess.STARTUPINFO()
-            startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-
-        result = subprocess.run(cmd, capture_output=True, text=True, startupinfo=startupinfo)
-
-        if result.returncode == 0 and os.path.exists(output_path):
-            old_size = os.path.getsize(file_path)
-            new_size = os.path.getsize(output_path)
-            
-            size_diff_mb = (old_size - new_size) / (1024 * 1024)
-            result_msg = f"Done!\nOld: {old_size/1024:.1f} KB\nNew: {new_size/1024:.1f} KB"
-            
-            if new_size > old_size:
-                result_msg += "\n\nWarning: File size increased!"
-                log(f"Warning: Size increased for {filename}")
-            else:
-                 log(f"Success: Reduced by {size_diff_mb:.2f} MB")
-
-            return result_msg
+        log(f"CMD: {' '.join(cmd)}")
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        if result.returncode == 0:
+            log("SUCCESS")
+            return "Optimization Successful!"
         else:
-            err_msg = f"Magick Error: {result.stderr}"
-            log(err_msg)
-            return f"Error optimizing {filename}.\nSee log at {LOG_FILE}"
-
+            log(f"FAILED: {result.stderr}")
+            return f"Error: {result.stderr}"
     except Exception as e:
-        log(f"Exception: {e}")
-        return f"Critical error: {e}"
+        log(f"CRITICAL: {str(e)}")
+        return str(e)
 
 def main():
-    try:
-        if len(sys.argv) < 2:
-            log("No arguments provided.")
-            show_message("PDF Optimizer", "Usage: optimizer.py [dpi] [file_path]", 64)
-            return
-
-        # Parse arguments
-        first_arg = sys.argv[1]
-        file_path = ""
-        dpi = DEFAULT_DPI
-
-        if first_arg.isdigit():
-            dpi = int(first_arg)
-            if len(sys.argv) > 2:
-                file_path = sys.argv[2]
-        else:
-            file_path = first_arg
-
-        if not file_path:
-            show_message("PDF Optimizer Error", "No file path provided in arguments.", 16)
-            return
-
-        if not file_path.lower().endswith(".pdf"):
-            show_message("PDF Optimizer Error", f"File is not a PDF:\n{file_path}", 48)
-            return
-
-        # Run optimization
-        result_message = optimize_pdf(file_path, dpi)
-        
-        if result_message:
-            show_message("PDF Optimizer Result", result_message, 64)
-
-    except Exception as e:
-        log(f"CRITICAL ERROR in main: {e}")
-        show_message("PDF Optimizer Critical Error", str(e), 16)
+    if len(sys.argv) < 3: return
+    res = optimize_pdf(sys.argv[2], sys.argv[1])
+    ctypes.windll.user32.MessageBoxW(0, res, "PDF Optimizer Suite", 64)
 
 if __name__ == "__main__":
     main()

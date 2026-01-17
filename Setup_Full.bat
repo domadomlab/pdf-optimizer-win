@@ -1,77 +1,85 @@
 @echo off
-setlocal
-title PDF Optimizer Suite - Full Setup
+setlocal enabledelayedexpansion
+title PDF Optimizer Suite v3.1.4 - Setup & Diagnostics
 
-echo ========================================================
-echo        PDF Optimizer Suite for Windows 11
-echo           Full Installation Wrapper
-echo ========================================================
-echo.
+set SEE_MASK_NOZONECHECKS=1
+color 07
 
-:: 1. Check for Python
-python --version >nul 2>&1
+set "RAW_LOG_DIR=%~1"
+if "!RAW_LOG_DIR!"=="" set "RAW_LOG_DIR=%TEMP%"
+set "LOG_FILE=!RAW_LOG_DIR!\pdf_optimizer_debug.log"
+
+echo --- SETUP LOG v3.1.4 START --- >> "!LOG_FILE!"
+echo Date: %DATE% %TIME% >> "!LOG_FILE!"
+
+echo [1/4] Python Check...
+python --version 2>nul | findstr "3.12" >nul
 if %errorlevel% neq 0 (
-    echo.
-    echo [WARNING] Python is NOT found in PATH.
-    echo Launching bundled installer...
-    echo.
-    echo *** IMPORTANT INSTRUCTION ***
-    echo You MUST check the box "Add Python.exe to PATH" at the bottom of the installer window!
-    echo.
-    pause
-    
     if exist "%~dp0resources\python-installer.exe" (
-        "%~dp0resources\python-installer.exe"
-        
-        echo.
-        echo Please wait for installation to finish...
-        pause
-    ) else (
-        echo [ERROR] Bundled installer not found in 'resources' folder!
-        echo Please install Python manually.
-        pause
+        echo      Installing Python...
+        start /wait "" "%~dp0resources\python-installer.exe" /quiet InstallAllUsers=1 PrependPath=1
+        echo [INFO] Python Install Exit Code: !errorlevel! >> "!LOG_FILE!"
     )
-) else (
-    echo [OK] Python is found.
 )
 
-:: 2. Check for ImageMagick
+echo [2/4] Ghostscript Check...
+echo [DEBUG] Checking Ghostscript before install... >> "!LOG_FILE!"
+
+set "GS_FOUND=NO"
+gswin64c -version >nul 2>&1 && set "GS_FOUND=YES (PATH)"
+if "!GS_FOUND!"=="NO" (
+    reg query "HKLM\SOFTWARE\GPL Ghostscript" /ve >nul 2>&1 && set "GS_FOUND=YES (REG-GPL)"
+)
+if "!GS_FOUND!"=="NO" (
+    reg query "HKLM\SOFTWARE\Artifex\Ghostscript" /ve >nul 2>&1 && set "GS_FOUND=YES (REG-ARTIFEX)"
+)
+
+echo [INFO] GS Status before install: !GS_FOUND! >> "!LOG_FILE!"
+
+if "!GS_FOUND!"=="NO" (
+    if exist "%~dp0resources\gs-installer.exe" (
+        echo      Installing Ghostscript...
+        copy /y "%~dp0resources\gs-installer.exe" "%TEMP%\gs_setup.exe" >nul
+        echo [DEBUG] Running: %TEMP%\gs_setup.exe /S >> "!LOG_FILE!"
+        start /wait "" "%TEMP%\gs_setup.exe" /S
+        set "GS_EXIT=!errorlevel!"
+        echo [INFO] GS Install Exit Code: !GS_EXIT! >> "!LOG_FILE!"
+        del "%TEMP%\gs_setup.exe" /q
+        
+        :: Проверка после установки
+        set "GS_POST=FAIL"
+        if exist "C:\Program Files\gs" set "GS_POST=OK (Files exist)"
+        gswin64c -version >nul 2>&1 && set "GS_POST=OK (PATH works)"
+        echo [INFO] GS Status after install: !GS_POST! >> "!LOG_FILE!"
+        
+        if "!GS_POST!"=="FAIL" (
+            echo [WARN] Ghostscript failed to install automatically. >> "!LOG_FILE!"
+            echo      ^> Warning: GS not detected after install.
+        )
+    ) else (
+        echo [ERROR] GS installer NOT FOUND in resources! >> "!LOG_FILE!"
+    )
+) else (
+    echo      Detected: !GS_FOUND!
+)
+
+echo [3/4] ImageMagick Check...
 magick -version >nul 2>&1
 if %errorlevel% neq 0 (
-    echo.
-    echo [WARNING] ImageMagick is NOT found in PATH.
-    echo Launching bundled installer...
-    echo.
-    echo *** IMPORTANT INSTRUCTIONS ***
-    echo 1. In the installer, check "Install legacy utilities (e.g. convert)"
-    echo 2. Check "Add application directory to your system path"
-    echo 3. Complete the installation.
-    echo.
-    pause
-    
     if exist "%~dp0resources\ImageMagick-Installer.exe" (
-        "%~dp0resources\ImageMagick-Installer.exe"
-        
-        :: Re-check after install (might require restart, but let's try)
-        echo.
-        echo Please wait for installation to finish...
-        pause
-    ) else (
-        echo [ERROR] Bundled installer not found in 'resources' folder!
-        echo Please install ImageMagick manually.
-        pause
+        echo      Installing ImageMagick...
+        start /wait "" "%~dp0resources\ImageMagick-Installer.exe" /VERYSILENT /TASKS="legacy_support,add_path"
+        echo [INFO] ImageMagick Install Exit Code: !errorlevel! >> "!LOG_FILE!"
     )
-) else (
-    echo [OK] ImageMagick is found.
 )
 
-:: 3. Run the Registration Script
-echo.
-echo Launching Context Menu Registration...
-call "%~dp0install\install.bat"
+echo [4/4] Registry Integration...
+call "%~dp0install\install.bat" "!LOG_FILE!"
 
-echo.
-echo ========================================================
-echo        Setup Complete!
-echo ========================================================
-pause
+echo Finalizing...
+taskkill /f /im explorer.exe >nul 2>&1
+start explorer.exe
+
+echo --- SETUP LOG v3.1.4 END --- >> "!LOG_FILE!"
+echo Setup Finished.
+timeout /t 3

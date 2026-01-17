@@ -8,6 +8,9 @@ __pycache__/
 # Generated Installers (artifacts)
 PDF_Optimizer_Suite_*.exe
 
+# Resources (Binary Installers)
+resources/*.exe
+
 # System
 Thumbs.db
 Desktop.ini
