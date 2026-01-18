@@ -4,7 +4,7 @@ setlocal enabledelayedexpansion
 set "LOG_FILE=%~1"
 set "PROJECT_ROOT=%~dp0.."
 
-echo --- TOTAL REGISTRY CLEAN ^& RESET START v3.6.0 --- >> "!LOG_FILE!"
+echo --- TOTAL REGISTRY CLEAN ^& RESET START v3.6.1 --- >> "!LOG_FILE!"
 
 pushd "%PROJECT_ROOT%"
 set "PROJECT_ROOT=%CD%"

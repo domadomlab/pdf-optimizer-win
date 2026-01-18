@@ -97,7 +97,7 @@ def find_magick():
     return None
 
 def optimize_pdf(file_path, dpi):
-    log(f"--- SESSION START v3.6.0: {file_path} ---")
+    log(f"--- SESSION START v3.6.1: {file_path} ---")
     
     gs_exe = find_ghostscript()
     if gs_exe:
