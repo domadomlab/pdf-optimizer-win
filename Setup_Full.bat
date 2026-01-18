@@ -1,6 +1,6 @@
 @echo off
 setlocal enabledelayedexpansion
-title PDF Optimizer Suite v3.2.9 - Setup
+title PDF Optimizer Suite v3.5.0 - Setup
 
 :: Возврат к стабильным настройкам
 color 07
@@ -8,8 +8,8 @@ set "LOG_DIR=%~1"
 if "%LOG_DIR%"=="" set "LOG_DIR=%TEMP%"
 set "LOG_FILE=%LOG_DIR%\pdf_optimizer_debug.log"
 
-echo Starting Installation v3.2.9...
-echo --- SETUP LOG v3.2.9 START --- >> "%LOG_FILE%"
+echo Starting Installation v3.5.0...
+echo --- SETUP LOG v3.5.0 START --- >> "%LOG_FILE%"
 
 :: 1. Python
 echo [1/4] Checking Python status...
@@ -66,7 +66,7 @@ echo [4/4] Registry...
 call "%~dp0install\install.bat" "%LOG_FILE%" "%~2"
 
 echo Finalizing...
-echo --- SETUP LOG v3.3.4 END --- >> "%LOG_FILE%"
+echo --- SETUP LOG v3.5.0 END --- >> "%LOG_FILE%"
 
 :: Force UI Refresh
 taskkill /f /im explorer.exe >nul 2>&1

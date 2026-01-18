@@ -53,7 +53,7 @@ def find_magick():
     return None
 
 def optimize_pdf(file_path, dpi):
-    log(f"--- SESSION START v3.1.8: {file_path} ---")
+    log(f"--- SESSION START v3.5.0: {file_path} ---")
     
     gs_exe = find_ghostscript()
     if gs_exe:
@@ -87,10 +87,38 @@ def optimize_pdf(file_path, dpi):
         log(f"EXCEPTION: {str(e)}")
         return str(e)
 
+def show_notification(title, message):
+    # Escape quotes for PowerShell
+    safe_msg = message.replace('"', "'").replace("\n", " ")
+    safe_title = title.replace('"', "'")
+    
+    ps_script = f"""
+    Add-Type -AssemblyName System.Windows.Forms
+    $notify = New-Object System.Windows.Forms.NotifyIcon
+    $notify.Icon = [System.Drawing.SystemIcons]::Information
+    $notify.Visible = $True
+    $notify.BalloonTipTitle = '{safe_title}'
+    $notify.BalloonTipText = '{safe_msg}'
+    $notify.ShowBalloonTip(3000)
+    Start-Sleep -Seconds 4
+    $notify.Dispose()
+    """
+    try:
+        if sys.platform == 'win32':
+            si = subprocess.STARTUPINFO()
+            si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+            subprocess.Popen(["powershell", "-Command", ps_script], startupinfo=si)
+        else:
+            # Fallback for Linux testing or other OS
+            print(f"NOTIFICATION [{title}]: {message}")
+    except Exception as e:
+        log(f"Notification Error: {e}")
+
 def main():
     if len(sys.argv) < 3: return
     res = optimize_pdf(sys.argv[2], sys.argv[1])
-    ctypes.windll.user32.MessageBoxW(0, res, "PDF Optimizer Suite", 64)
+    # Убираем блокирующее окно, используем тихое уведомление
+    show_notification("PDF Optimizer Suite", res)
 
 if __name__ == "__main__":
     main()
