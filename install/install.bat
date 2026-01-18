@@ -1,5 +1,4 @@
 @echo off
-chcp 65001 >nul
 setlocal enabledelayedexpansion
 
 set "LOG_FILE=%~1"
@@ -103,51 +102,55 @@ for %%K in (%PATHS_TO_NUKE%) do (
     reg delete "%%K\PDFOptimizer300" /f >nul 2>&1
 )
 
-:: --- 3. QUADRUPLE REGISTRATION (HKLM + HKCU Sys + HKCU Direct + ALL FILES TEST) ---
-echo Registering entries... >> "!LOG_FILE!"
-set "LANG_CODE=%~2"
+:: --- 3. POWER REGISTRATION (Reliable Unicode via Base64) ---
+echo Generating PowerShell registration script... >> "!LOG_FILE!"
 
-:: Определяем названия на основе языка
-if /i "%LANG_CODE%"=="RU" (
-    echo [INFO] Installing Russian Context Menu... >> "!LOG_FILE!"
-    set "NAME_75=PDF: Эко (75 dpi)"
-    set "NAME_150=PDF: Почта (150 dpi)"
-    set "NAME_200=PDF: Печать (200 dpi)"
-    set "NAME_300=PDF: Качество (300 dpi)"
-) else (
-    echo [INFO] Installing English Context Menu... >> "!LOG_FILE!"
-    set "NAME_75=PDF: Eco (75 dpi)"
-    set "NAME_150=PDF: Email (150 dpi)"
-    set "NAME_200=PDF: Print (200 dpi)"
-    set "NAME_300=PDF: High (300 dpi)"
-)
+set "PS_SCRIPT=%TEMP%\register_menu.ps1"
 
-:: Добавляем "All Files" (*) для диагностики. Если меню появится везде - проблема в привязке к .pdf
-set "ROOTS=HKLM\SOFTWARE\Classes\SystemFileAssociations\.pdf\shell HKCU\Software\Classes\SystemFileAssociations\.pdf\shell HKCU\Software\Classes\.pdf\shell HKCU\Software\Classes\*\shell"
+:: Создаем PS1 скрипт
+(
+echo $PyExe = '%PY_EXE%'
+echo $ScriptPath = '%RAW_SCRIPT%'
+echo $Lang = '%LANG_CODE%'
+echo.
+echo function Get-StrFromB64 { param($s); [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($s)) }
+echo.
+echo if ($Lang -eq 'RU') {
+echo     $Names = @{ 
+echo         '75' = (Get-StrFromB64 'UERGOiDQrdC60L4gKDc1IGRwaSk=');      # PDF: Эко (75 dpi)
+echo         '150'= (Get-StrFromB64 'UERGOiDQn9C+0YfRgtCwICgxNTAgZHBpKQ=='); # PDF: Почта (150 dpi)
+echo         '200'= (Get-StrFromB64 'UERGOiDQnZCi0YfQsNGC0YwgKDIwMCBkcGkp'); # PDF: Печать (200 dpi)
+echo         '300'= (Get-StrFromB64 'UERGOiDQmtCw0YfQtdGB0YLQstC+ICgzMDAgZHBpKQ==') # PDF: Качество (300 dpi)
+echo     }
+echo } else {
+echo     $Names = @{ 
+echo         '75' = 'PDF: Eco (75 dpi)'; 
+echo         '150'= 'PDF: Email (150 dpi)'; 
+echo         '200'= 'PDF: Print (200 dpi)'; 
+echo         '300'= 'PDF: High (300 dpi)' 
+echo     }
+echo }
+echo.
+echo $Roots = @('HKLM:\SOFTWARE\Classes\SystemFileAssociations\.pdf\shell', 'HKCU:\Software\Classes\SystemFileAssociations\.pdf\shell', 'HKCU:\Software\Classes\.pdf\shell', 'HKCU:\Software\Classes\*\shell')
+echo.
+echo foreach ($Root in $Roots) {
+echo     if (!(Test-Path $Root)) { New-Item -Path $Root -Force ^| Out-Null }
+echo     foreach ($Dpi in @('75','150','200','300')) {
+echo         $KeyPath = "$Root\PDFOptimizer$Dpi"
+echo         New-Item -Path $KeyPath -Force ^| Out-Null
+echo         Set-ItemProperty -Path $KeyPath -Name '(Default)' -Value $Names[$Dpi]
+echo         Set-ItemProperty -Path $KeyPath -Name 'Icon' -Value 'shell32.dll,166'
+echo         $CmdPath = "$KeyPath\command"
+echo         New-Item -Path $CmdPath -Force ^| Out-Null
+echo         $CmdVal = "`"$PyExe`" `"$ScriptPath`" $Dpi `"%1`""
+echo         Set-ItemProperty -Path $CmdPath -Name '(Default)' -Value $CmdVal
+echo     }
+echo }
+) > "!PS_SCRIPT!"
 
-for %%R in (%ROOTS%) do (
-    echo   Registering in %%R... >> "!LOG_FILE!"
-    
-    :: 75 (NEW)
-    reg add "%%R\PDFOptimizer75" /ve /d "!NAME_75!" /f >nul
-    reg add "%%R\PDFOptimizer75" /v "Icon" /d "shell32.dll,166" /f >nul
-    reg add "%%R\PDFOptimizer75\command" /ve /d "\"%PY_EXE%\" \"%RAW_SCRIPT%\" 75 \"%%1\"" /f >nul
-
-    :: 150
-    reg add "%%R\PDFOptimizer150" /ve /d "!NAME_150!" /f >nul
-    reg add "%%R\PDFOptimizer150" /v "Icon" /d "shell32.dll,166" /f >nul
-    reg add "%%R\PDFOptimizer150\command" /ve /d "\"%PY_EXE%\" \"%RAW_SCRIPT%\" 150 \"%%1\"" /f >nul
-
-    :: 200
-    reg add "%%R\PDFOptimizer200" /ve /d "!NAME_200!" /f >nul
-    reg add "%%R\PDFOptimizer200" /v "Icon" /d "shell32.dll,166" /f >nul
-    reg add "%%R\PDFOptimizer200\command" /ve /d "\"%PY_EXE%\" \"%RAW_SCRIPT%\" 200 \"%%1\"" /f >nul
-
-    :: 300
-    reg add "%%R\PDFOptimizer300" /ve /d "!NAME_300!" /f >nul
-    reg add "%%R\PDFOptimizer300" /v "Icon" /d "shell32.dll,166" /f >nul
-    reg add "%%R\PDFOptimizer300\command" /ve /d "\"%PY_EXE%\" \"%RAW_SCRIPT%\" 300 \"%%1\"" /f >nul
-)
+echo Executing PowerShell registration... >> "!LOG_FILE!"
+powershell -ExecutionPolicy Bypass -File "!PS_SCRIPT!" >> "!LOG_FILE!" 2>&1
+del "!PS_SCRIPT!"
 
 :: --- 4. FORCE REFRESH ---
 echo Refreshing Windows Shell... >> "!LOG_FILE!"
