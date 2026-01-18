@@ -1,58 +1,63 @@
-# 🚀 PDF Optimizer Suite
-> **The Ultimate Context Menu Solution for Windows 10 & 11**  
-> *Профессиональная оптимизация PDF в один клик прямо из Проводника.*
+# 🚀 PDF Optimizer Suite v3.6
 
-![Platform](https://img.shields.io/badge/Platform-Windows%2011%20%2F%2010-0078D6?style=for-the-badge&logo=windows)
-![Python](https://img.shields.io/badge/Built%20with-Python%203.12-3776AB?style=for-the-badge&logo=python)
-![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
-![Downloads](https://img.shields.io/github/downloads/horizondrill-alt/pdf-optimizer-win/total?style=for-the-badge&color=orange)
+> **The Ghost in the Shell.**  
+> *Professional compression & privacy tool integrated directly into Windows Explorer.*
 
----
-
-## 🇬🇧 English: Why You Need This?
-
-Stop uploading your private documents to sketchy online converters. **PDF Optimizer Suite** brings professional-grade compression tools directly to your Windows Right-Click Menu.
-
-### ✨ Killer Features
-*   **🖱️ One-Click Magic**: Just right-click any PDF file. No apps to open, no drag-and-drop.
-*   **🔒 100% Private**: Everything happens offline on your PC. Your data never leaves your drive.
-*   **🧠 Smart Profiles**:
-    *   🌱 **Eco (75 DPI)**: Crush file size for archiving.
-    *   📧 **Email (150 DPI)**: Perfect balance for attachments.
-    *   🖨️ **Print (200 DPI)**: Office-ready quality.
-    *   💎 **High (300 DPI)**: Crystal clear visuals.
-*   **🛠️ Self-Healing Installer**: Automatically installs Python 3.12, Ghostscript, and ImageMagick. If anything breaks, it fixes itself.
-
-### 📥 [Download Latest Release](https://github.com/horizondrill-alt/pdf-optimizer-win/releases/latest)
+![Version](https://img.shields.io/github/v/release/domadomlab/pdf-optimizer-win?style=for-the-badge&color=blueviolet)
+![Platform](https://img.shields.io/badge/Windows-11%20%2F%2010-0078D6?style=for-the-badge&logo=windows)
+![Privacy](https://img.shields.io/badge/Privacy-100%25-success?style=for-the-badge&logo=torproject)
+![Downloads](https://img.shields.io/github/downloads/domadomlab/pdf-optimizer-win/total?style=for-the-badge&color=orange)
 
 ---
 
-## 🇷🇺 Русский: Почему это нужно вам?
+## 🕶️ What is this?
 
-Хватит загружать свои личные документы на сомнительные сайты для "онлайн-сжатия". **PDF Optimizer Suite** добавляет мощные инструменты компрессии прямо в контекстное меню Windows.
+This is not just a PDF compressor. It is a **stealth utility** for your workflow.
+**PDF Optimizer Suite** adds powerful, server-grade processing tools to your Right-Click Menu. It runs offline, silently, and leaves no trace.
 
-### ✨ Главные преимущества
-*   **🖱️ Мгновенный доступ**: Просто нажмите правую кнопку мыши на любом PDF. Не нужно открывать программы.
-*   **🔒 Приватность**: Все происходит офлайн на вашем компьютере. Ваши файлы в безопасности.
-*   **🧠 Умные режимы**:
-    *   🌱 **Эко (75 DPI)**: Максимальное сжатие.
-    *   📧 **Почта (150 DPI)**: Идеально для отправки.
-    *   🖨️ **Печать (200 DPI)**: Качество для документов.
-    *   💎 **Качество (300 DPI)**: Без потери деталей.
-*   **🛠️ Все включено**: Инсталлер сам скачает и настроит Python, Ghostscript и ImageMagick.
+## 🔥 Killer Features (v3.6)
 
-### 📥 [Скачать последнюю версию](https://github.com/horizondrill-alt/pdf-optimizer-win/releases/latest)
+### 🥷 Camouflage Mode (New!)
+**Plausible Deniability Engine.**
+When you optimize a file, the software strips all original metadata (software traces, timestamps) and injects **fake digital fingerprints** of real physical scanners.
+*   Your PDF will look like it was scanned on an **HP LaserJet**, **Xerox WorkCentre**, or **Canon iR-ADV**.
+*   Even the internal PDF structure is rewritten to mimic hardware encoding.
+
+### 🔇 Silent Batch Processing
+**Efficiency Redefined.**
+Select 1 file or 100 files. Right-click. Done.
+*   No annoying popup windows.
+*   System Tray notifications keep you informed without stealing focus.
+*   Multi-threaded processing handles bulk tasks in seconds.
+
+### ⚡ Native Integration
+*   **Power Registration:** Uses advanced PowerShell injection to ensure the menu works on ANY Windows locale (perfect Cyrillic support).
+*   **Seamless Updates:** Updates the Windows Shell instantly—no restart required.
+
+---
+
+## 🇷🇺 Русское описание
+
+**PDF Optimizer Suite** — это профессиональный инструмент для тех, кто ценит время и приватность. Мы перенесли серверные технологии сжатия прямо в контекстное меню Windows.
+
+### Почему это круто?
+
+1.  **Режим "Хамелеон" (v3.6):** Программа не просто сжимает файл, она "пересобирает" его, подменяя метаданные. Ваш PDF будет выглядеть так, будто его только что отсканировали на офисном МФУ (HP, Canon, Xerox). Никаких следов Word или PDF редакторов.
+2.  **Тихий режим:** Выделите 50 файлов, нажмите "Оптимизировать" и продолжайте работать. Уведомления появятся в трее, не прерывая ваш рабочий процесс.
+3.  **Умная установка:** Инсталлятор сам найдет или скачает Python и настроит все зависимости.
+
+### 📥 [Download Latest Installer / Скачать](https://github.com/domadomlab/pdf-optimizer-win/releases/latest)
 
 ---
 
-## ⚙️ Installation / Установка
+## 🛠️ Profiles / Режимы
 
-1.  Download the **Installer** (`.exe`) from the Releases page.
-2.  Run as **Administrator**.
-3.  Select your language (**English** or **Russian**).
-4.  Wait ~30 seconds. **Done!**
-
-Now right-click any PDF file and enjoy!
+| Profile | DPI | Use Case |
+| :--- | :--- | :--- |
+| **Eco** | 75 | **Maximum Compression.** For archives and quick previews. |
+| **Email** | 150 | **Balanced.** Perfect for email attachments. Crystal clear text. |
+| **Print** | 200 | **Office Standard.** Great for printing and official documents. |
+| **High** | 300 | **Professional.** Pre-press quality. Retains fine details. |
 
 ---
-*Developed with ❤️ by DomCorp (c) 2026*
+*Developed by DomCorp (c) 2026. Open Source. MIT License.*
