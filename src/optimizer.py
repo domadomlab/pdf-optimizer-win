@@ -51,17 +51,17 @@ def get_fake_metadata_args():
         profile = random.choice(FAKE_SCANNERS)
         args = []
         
-        # Set standardized fields
-        if profile["Producer"]: args.extend(["-set", "pdf:Producer", profile["Producer"]])
-        if profile["Creator"]: args.extend(["-set", "pdf:Creator", profile["Creator"]])
+        # Using -define pdf:Property=Value is more reliable for PDF output in ImageMagick
+        if profile["Producer"]: args.extend(["-define", f"pdf:Producer={profile['Producer']}"])
+        if profile["Creator"]: args.extend(["-define", f"pdf:Creator={profile['Creator']}"])
         
         # Author is often empty or generic
-        author = profile["Author"] if profile["Author"] else ""
-        args.extend(["-set", "pdf:Author", author])
+        author = profile["Author"] if profile["Author"] else " "
+        args.extend(["-define", f"pdf:Author={author}"])
         
         # Title is usually generic for scans
-        titles = ["Scanned Document", "Scan", "Doc", "Document", "Scan_2024", "CCF_0001"]
-        args.extend(["-set", "pdf:Title", random.choice(titles)])
+        titles = ["Scanned Document", "Scan", "Doc", "Document", "Scan_2026", "CCF_0001"]
+        args.extend(["-define", f"pdf:Title={random.choice(titles)}"])
         
         log(f"Applying Fake Profile: {profile['Producer']}")
         return args
