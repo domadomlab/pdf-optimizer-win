@@ -68,6 +68,6 @@ call "%~dp0install\install.bat" "%LOG_FILE%" "%~2"
 echo Finalizing...
 echo --- SETUP LOG v3.5.0 END --- >> "%LOG_FILE%"
 
-:: Force UI Refresh
-taskkill /f /im explorer.exe >nul 2>&1
-start explorer.exe
+:: Force UI Refresh - DISABLED (Handled gently by PS)
+:: taskkill /f /im explorer.exe >nul 2>&1
+:: start explorer.exe

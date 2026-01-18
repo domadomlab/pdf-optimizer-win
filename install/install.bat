@@ -109,7 +109,7 @@ echo $ScriptPath = '!RAW_SCRIPT!' >> "!PS_SCRIPT!"
 echo $Lang = '!LANG_CODE!' >> "!PS_SCRIPT!"
 echo function Get-StrFromB64 { param($s); [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($s)) } >> "!PS_SCRIPT!"
 echo if ($Lang -eq 'RU') { >> "!PS_SCRIPT!"
-echo     $Names = @{ '75'=(Get-StrFromB64 'UERGOiDQrdC60L4gKDc1IGRwaSk='); '150'=(Get-StrFromB64 'UERGOiDQn9C+0YfRgtCwICgxNTAgZHBpKQ=='); '200'=(Get-StrFromB64 'UERGOiDQnZCi0YfQsNGC0YwgKDIwMCBkcGkp'); '300'=(Get-StrFromB64 'UERGOiDQmtCw0YfQtdGB0YLQstC+ICgzMDAgZHBpKQ==') } >> "!PS_SCRIPT!"
+echo     $Names = @{ '75'=(Get-StrFromB64 'UERGOiDQrdC60L4gKDc1IGRwaSk='); '150'=(Get-StrFromB64 'UERGOiDQn9C+0YfRgtCwICgxNTAgZHBpKQ=='); '200'=(Get-StrFromB64 'UERGOiDQn9C10YfQsNGC0YwgKDIwMCBkcGkp'); '300'=(Get-StrFromB64 'UERGOiDQmtCw0YfQtdGB0YLQstC+ICgzMDAgZHBpKQ==') } >> "!PS_SCRIPT!"
 echo } else { >> "!PS_SCRIPT!"
 echo     $Names = @{ '75'='PDF: Eco (75 dpi)'; '150'='PDF: Email (150 dpi)'; '200'='PDF: Print (200 dpi)'; '300'='PDF: High (300 dpi)' } >> "!PS_SCRIPT!"
 echo } >> "!PS_SCRIPT!"
@@ -125,6 +125,13 @@ echo         $CmdVal = "`"$PyExe`" `"$ScriptPath`" $Dpi `"%%1`"" >> "!PS_SCRIPT!
 echo         New-Item -Path $CmdPath -Force -Value $CmdVal ^| Out-Null >> "!PS_SCRIPT!"
 echo     } >> "!PS_SCRIPT!"
 echo } >> "!PS_SCRIPT!"
+
+echo try { >> "!PS_SCRIPT!"
+echo     if (-not ([System.Management.Automation.PSTypeName]'Win32.Shell32').Type) { >> "!PS_SCRIPT!"
+echo         Add-Type -MemberDefinition '[DllImport("shell32.dll")] public static extern void SHChangeNotify(long wEventId, uint uFlags, IntPtr dwItem1, IntPtr dwItem2);' -Name "Shell32" -Namespace Win32 >> "!PS_SCRIPT!"
+echo     } >> "!PS_SCRIPT!"
+echo     [Win32.Shell32]::SHChangeNotify(0x08000000, 0, [IntPtr]::Zero, [IntPtr]::Zero) >> "!PS_SCRIPT!"
+echo } catch { } >> "!PS_SCRIPT!"
 
 echo Executing PowerShell registration... >> "!LOG_FILE!"
 powershell -ExecutionPolicy Bypass -File "!PS_SCRIPT!" >> "!LOG_FILE!" 2>&1

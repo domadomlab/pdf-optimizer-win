@@ -1,0 +1,8 @@
+{
+  "tag_name": "v3.5.0",
+  "target_commitish": "master",
+  "name": "PDF Optimizer Suite v3.5.0 (Silent Mode & Fixes)",
+  "body": "## 🚀 Release v3.5.0\n\n### Major Improvements\n* **Silent Batch Processing:** No more annoying popup windows! Processing happens in the background with system tray notifications. Select 100 files and optimize them all at once.\n* **Fixed Russian Encoding:** Context menu entries in Russian now display correctly without encoding errors.\n* **Installer:** Self-healing installer with automatic dependency management (Python 3.12, Ghostscript, ImageMagick).\n\n### Installation\n1. Download **PDF_Optimizer_Suite_v3.5.0_Installer.exe**.\n2. Run as Administrator.\n3. Right-click any PDF -> Select Profile.",
+  "draft": false,
+  "prerelease": false
+}
