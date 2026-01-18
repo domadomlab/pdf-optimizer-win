@@ -137,13 +137,13 @@ echo foreach ($Root in $Roots) {
 echo     if (!(Test-Path $Root)) { New-Item -Path $Root -Force ^| Out-Null }
 echo     foreach ($Dpi in @('75','150','200','300')) {
 echo         $KeyPath = "$Root\PDFOptimizer$Dpi"
-echo         New-Item -Path $KeyPath -Force ^| Out-Null
-echo         Set-ItemProperty -Path $KeyPath -Name '(Default)' -Value $Names[$Dpi]
+echo         # Используем -Value в New-Item для установки (Default) значения ключа
+echo         New-Item -Path $KeyPath -Force -Value $Names[$Dpi] ^| Out-Null
 echo         Set-ItemProperty -Path $KeyPath -Name 'Icon' -Value 'shell32.dll,166'
 echo         $CmdPath = "$KeyPath\command"
-echo         New-Item -Path $CmdPath -Force ^| Out-Null
-echo         $CmdVal = "`"$PyExe`" `"$ScriptPath`" $Dpi `"%1`""
-echo         Set-ItemProperty -Path $CmdPath -Name '(Default)' -Value $CmdVal
+echo         $CmdVal = "`"$PyExe`" `"$ScriptPath`" $Dpi `"%%1`""
+echo         # Используем -Value в New-Item для установки команды
+echo         New-Item -Path $CmdPath -Force -Value $CmdVal ^| Out-Null
 echo     }
 echo }
 ) > "!PS_SCRIPT!"
