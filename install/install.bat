@@ -4,7 +4,7 @@ setlocal enabledelayedexpansion
 set "LOG_FILE=%~1"
 set "PROJECT_ROOT=%~dp0.."
 
-echo --- TOTAL REGISTRY CLEAN & RESET START v3.2.9 --- >> "!LOG_FILE!"
+echo --- TOTAL REGISTRY CLEAN ^& RESET START v3.5.0 --- >> "!LOG_FILE!"
 
 pushd "%PROJECT_ROOT%"
 set "PROJECT_ROOT=%CD%"
@@ -24,12 +24,10 @@ for %%V in (3.12 3.11 3.10 3.13 3.9) do (
             for /f "tokens=2*" %%a in ('reg query "%%R\SOFTWARE\Python\PythonCore\%%V\InstallPath" /ve 2^>nul') do (
                 echo     [DEBUG] Found raw value: %%b >> "!LOG_FILE!"
                 set "DP=%%b"
-                if "!DP:~-1!" neq \" set "DP=!DP!\"
+                if "!DP:~-1!" neq \" set "DP=!DP!\" 
                 if exist "!DP!pythonw.exe" (
                     set "PY_EXE=!DP!pythonw.exe"
                     echo     [SUCCESS] Found pythonw.exe at !DP!pythonw.exe >> "!LOG_FILE!"
-                ) else (
-                     echo     [WARNING] Path exists but pythonw.exe not found at !DP!pythonw.exe >> "!LOG_FILE!"
                 )
             )
         )
@@ -51,7 +49,6 @@ if not defined PY_EXE (
         if exist "%%P" (
             set "PY_EXE=%%P"
             echo [SUCCESS] Found direct path: %%P >> "!LOG_FILE!"
-            goto found_py
         )
     )
 )
@@ -61,29 +58,25 @@ if not defined PY_EXE (
     where py.exe >nul 2>&1
     if !errorlevel! equ 0 (
         set "PY_EXE=py.exe" 
-        echo [SUCCESS] Found Python Launcher (py.exe) >> "!LOG_FILE!"
-        goto found_py
+        echo [SUCCESS] Found Python Launcher py.exe >> "!LOG_FILE!"
     )
 )
 
 :: 1.4 Fallback to WHERE command
 if not defined PY_EXE (
-    echo [DEBUG] Trying 'where pythonw.exe'... >> "!LOG_FILE!"
+    echo [DEBUG] Trying where pythonw.exe... >> "!LOG_FILE!"
     for /f "delims=" %%i in ('where pythonw.exe 2^>nul') do (
         set "PY_EXE=%%i"
-        echo [DEBUG] 'where' found: %%i >> "!LOG_FILE!"
+        echo [DEBUG] where found: %%i >> "!LOG_FILE!"
     )
 )
 
-:found_py
 :: 1.5 Final check
-
-:: 1.3 Final check
 if not defined PY_EXE (
     echo [FAIL] Python NOT found! >> "!LOG_FILE!"
     exit /b 1
 )
-echo [OK] Using Python: %PY_EXE% >> "!LOG_FILE!"
+echo [OK] Using Python: !PY_EXE! >> "!LOG_FILE!"
 
 :: --- 2. THE NUKE (Delete all possible legacy paths) ---
 echo Cleaning all legacy registry paths... >> "!LOG_FILE!"
@@ -97,6 +90,7 @@ set "PATHS_TO_NUKE=!PATHS_TO_NUKE! HKLM\SOFTWARE\Classes\.pdf\shell"
 set "PATHS_TO_NUKE=!PATHS_TO_NUKE! HKLM\SOFTWARE\Classes\*\shell"
 
 for %%K in (%PATHS_TO_NUKE%) do (
+    reg delete "%%K\PDFOptimizer75" /f >nul 2>&1
     reg delete "%%K\PDFOptimizer150" /f >nul 2>&1
     reg delete "%%K\PDFOptimizer200" /f >nul 2>&1
     reg delete "%%K\PDFOptimizer300" /f >nul 2>&1
@@ -106,56 +100,38 @@ for %%K in (%PATHS_TO_NUKE%) do (
 echo Generating PowerShell registration script... >> "!LOG_FILE!"
 
 set "PS_SCRIPT=%TEMP%\register_menu.ps1"
+if exist "!PS_SCRIPT!" del "!PS_SCRIPT!"
 
-:: Создаем PS1 скрипт
-(
-echo $PyExe = '%PY_EXE%'
-echo $ScriptPath = '%RAW_SCRIPT%'
-echo $Lang = '%LANG_CODE%'
-echo.
-echo function Get-StrFromB64 { param($s); [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($s)) }
-echo.
-echo if ($Lang -eq 'RU') {
-echo     $Names = @{ 
-echo         '75' = (Get-StrFromB64 'UERGOiDQrdC60L4gKDc1IGRwaSk=');      # PDF: Эко (75 dpi)
-echo         '150'= (Get-StrFromB64 'UERGOiDQn9C+0YfRgtCwICgxNTAgZHBpKQ=='); # PDF: Почта (150 dpi)
-echo         '200'= (Get-StrFromB64 'UERGOiDQnZCi0YfQsNGC0YwgKDIwMCBkcGkp'); # PDF: Печать (200 dpi)
-echo         '300'= (Get-StrFromB64 'UERGOiDQmtCw0YfQtdGB0YLQstC+ICgzMDAgZHBpKQ==') # PDF: Качество (300 dpi)
-echo     }
-echo } else {
-echo     $Names = @{ 
-echo         '75' = 'PDF: Eco (75 dpi)'; 
-echo         '150'= 'PDF: Email (150 dpi)'; 
-echo         '200'= 'PDF: Print (200 dpi)'; 
-echo         '300'= 'PDF: High (300 dpi)' 
-echo     }
-echo }
-echo.
-echo $Roots = @('HKLM:\SOFTWARE\Classes\SystemFileAssociations\.pdf\shell', 'HKCU:\Software\Classes\SystemFileAssociations\.pdf\shell', 'HKCU:\Software\Classes\.pdf\shell', 'HKCU:\Software\Classes\*\shell')
-echo.
-echo foreach ($Root in $Roots) {
-echo     if (!(Test-Path $Root)) { New-Item -Path $Root -Force ^| Out-Null }
-echo     foreach ($Dpi in @('75','150','200','300')) {
-echo         $KeyPath = "$Root\PDFOptimizer$Dpi"
-echo         # Используем -Value в New-Item для установки (Default) значения ключа
-echo         New-Item -Path $KeyPath -Force -Value $Names[$Dpi] ^| Out-Null
-echo         Set-ItemProperty -Path $KeyPath -Name 'Icon' -Value 'shell32.dll,166'
-echo         $CmdPath = "$KeyPath\command"
-echo         $CmdVal = "`"$PyExe`" `"$ScriptPath`" $Dpi `"%%1`""
-echo         # Используем -Value в New-Item для установки команды
-echo         New-Item -Path $CmdPath -Force -Value $CmdVal ^| Out-Null
-echo     }
-echo }
-) > "!PS_SCRIPT!"
+set "LANG_CODE=%~2"
+
+echo $PyExe = '!PY_EXE!' >> "!PS_SCRIPT!"
+echo $ScriptPath = '!RAW_SCRIPT!' >> "!PS_SCRIPT!"
+echo $Lang = '!LANG_CODE!' >> "!PS_SCRIPT!"
+echo function Get-StrFromB64 { param($s); [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($s)) } >> "!PS_SCRIPT!"
+echo if ($Lang -eq 'RU') { >> "!PS_SCRIPT!"
+echo     $Names = @{ '75'=(Get-StrFromB64 'UERGOiDQrdC60L4gKDc1IGRwaSk='); '150'=(Get-StrFromB64 'UERGOiDQn9C+0YfRgtCwICgxNTAgZHBpKQ=='); '200'=(Get-StrFromB64 'UERGOiDQnZCi0YfQsNGC0YwgKDIwMCBkcGkp'); '300'=(Get-StrFromB64 'UERGOiDQmtCw0YfQtdGB0YLQstC+ICgzMDAgZHBpKQ==') } >> "!PS_SCRIPT!"
+echo } else { >> "!PS_SCRIPT!"
+echo     $Names = @{ '75'='PDF: Eco (75 dpi)'; '150'='PDF: Email (150 dpi)'; '200'='PDF: Print (200 dpi)'; '300'='PDF: High (300 dpi)' } >> "!PS_SCRIPT!"
+echo } >> "!PS_SCRIPT!"
+echo $Roots = @('HKLM:\SOFTWARE\Classes\SystemFileAssociations\.pdf\shell', 'HKCU:\Software\Classes\SystemFileAssociations\.pdf\shell', 'HKCU:\Software\Classes\.pdf\shell', 'HKCU:\Software\Classes\*\shell') >> "!PS_SCRIPT!"
+echo foreach ($Root in $Roots) { >> "!PS_SCRIPT!"
+echo     if (!(Test-Path $Root)) { New-Item -Path $Root -Force ^| Out-Null } >> "!PS_SCRIPT!"
+echo     foreach ($Dpi in @('75','150','200','300')) { >> "!PS_SCRIPT!"
+echo         $KeyPath = "$Root\PDFOptimizer$Dpi" >> "!PS_SCRIPT!"
+echo         New-Item -Path $KeyPath -Force -Value $Names[$Dpi] ^| Out-Null >> "!PS_SCRIPT!"
+echo         Set-ItemProperty -Path $KeyPath -Name 'Icon' -Value 'shell32.dll,166' >> "!PS_SCRIPT!"
+echo         $CmdPath = "$KeyPath\command" >> "!PS_SCRIPT!"
+echo         $CmdVal = "`"$PyExe`" `"$ScriptPath`" $Dpi `"%%1`"" >> "!PS_SCRIPT!"
+echo         New-Item -Path $CmdPath -Force -Value $CmdVal ^| Out-Null >> "!PS_SCRIPT!"
+echo     } >> "!PS_SCRIPT!"
+echo } >> "!PS_SCRIPT!"
 
 echo Executing PowerShell registration... >> "!LOG_FILE!"
 powershell -ExecutionPolicy Bypass -File "!PS_SCRIPT!" >> "!LOG_FILE!" 2>&1
-del "!PS_SCRIPT!"
+if exist "!PS_SCRIPT!" del "!PS_SCRIPT!"
 
 :: --- 4. FORCE REFRESH ---
 echo Refreshing Windows Shell... >> "!LOG_FILE!"
 ie4uinit.exe -show >nul 2>&1
-nircmd.exe sysrefresh >nul 2>&1
 
 echo [OK] All systems reset and registered. >> "!LOG_FILE!"
-
