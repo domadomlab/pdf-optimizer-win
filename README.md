@@ -50,6 +50,24 @@ Select 1 file or 100 files. Right-click. Done.
 
 ---
 
+## 🏗️ Build from Source / Сборка
+
+If you want to build the installer yourself (requires NSIS):
+
+1.  Clone repository:
+    ```bash
+    git clone https://github.com/domadomlab/pdf-optimizer-win.git
+    cd pdf-optimizer-win
+    ```
+2.  **Download dependencies** (Python, Ghostscript, ImageMagick):
+    *   **Windows:** Run `download_deps.bat`
+    *   **Linux/WSL:** Run `bash download_deps.sh`
+3.  Compile with NSIS:
+    *   **Windows:** Right-click `installer.nsi` -> *Compile NSIS Script*
+    *   **Linux:** `makensis installer.nsi`
+
+---
+
 ## 🛠️ Profiles / Режимы
 
 | Profile | DPI | Use Case |
