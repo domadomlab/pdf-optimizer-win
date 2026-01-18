@@ -3,6 +3,7 @@ import os
 import subprocess
 import shutil
 import ctypes
+import random
 from datetime import datetime
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -18,12 +19,55 @@ if os.path.exists(CONFIG_FILE):
 
 LOG_FILE = os.path.join(LOG_DIR, 'pdf_optimizer_debug.log')
 
+# --- Fake Scanners Database ---
+FAKE_SCANNERS = [
+    # HP
+    {"Producer": "HP LaserJet MFP M426fdw", "Creator": "HP Scan", "Author": "Scanner"},
+    {"Producer": "HP Color LaserJet Pro MFP M283fdw", "Creator": "HP Smart", "Author": "Administrator"},
+    # Canon
+    {"Producer": "Canon iR-ADV C5535", "Creator": "Canon PDF Platform", "Author": ""},
+    {"Producer": "Canon MF Scan Utility", "Creator": "Canon MF643Cdw", "Author": "User"},
+    # Xerox
+    {"Producer": "Xerox WorkCentre 7845", "Creator": "Xerox WorkCentre", "Author": "Xerox"},
+    {"Producer": "Xerox VersaLink C405", "Creator": "Xerox MFP", "Author": "Scan"},
+    # Kyocera
+    {"Producer": "Kyocera ECOSYS M2540dn", "Creator": "KM-4050 Scanner", "Author": "Scanner"},
+    # Brother
+    {"Producer": "Brother MFC-L2710DW", "Creator": "Brother iPrint&Scan", "Author": ""},
+    # Epson
+    {"Producer": "Epson Scan 2", "Creator": "EPSON Scan", "Author": ""},
+]
+
 def log(message):
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     try:
         with open(LOG_FILE, "a", encoding="utf-8") as f:
             f.write(f"[{timestamp}] {message}\n")
     except: pass
+
+def get_fake_metadata_args():
+    """Generates random metadata to impersonate a physical scanner."""
+    try:
+        profile = random.choice(FAKE_SCANNERS)
+        args = []
+        
+        # Set standardized fields
+        if profile["Producer"]: args.extend(["-set", "pdf:Producer", profile["Producer"]])
+        if profile["Creator"]: args.extend(["-set", "pdf:Creator", profile["Creator"]])
+        
+        # Author is often empty or generic
+        author = profile["Author"] if profile["Author"] else ""
+        args.extend(["-set", "pdf:Author", author])
+        
+        # Title is usually generic for scans
+        titles = ["Scanned Document", "Scan", "Doc", "Document", "Scan_2024", "CCF_0001"]
+        args.extend(["-set", "pdf:Title", random.choice(titles)])
+        
+        log(f"Applying Fake Profile: {profile['Producer']}")
+        return args
+    except Exception as e:
+        log(f"Metadata Error: {e}")
+        return []
 
 def find_ghostscript():
     # 1. Проверка в PATH
@@ -53,7 +97,7 @@ def find_magick():
     return None
 
 def optimize_pdf(file_path, dpi):
-    log(f"--- SESSION START v3.5.0: {file_path} ---")
+    log(f"--- SESSION START v3.6.0: {file_path} ---")
     
     gs_exe = find_ghostscript()
     if gs_exe:
@@ -71,8 +115,19 @@ def optimize_pdf(file_path, dpi):
         return "Error: ImageMagick not found."
 
     output_path = f"{os.path.splitext(file_path)[0]}_{dpi}dpi.pdf"
+    
+    # 1. Base command
     cmd = [magick_exe, "-density", str(dpi), "-units", "PixelsPerInch", file_path, 
-           "-alpha", "remove", "-alpha", "off", "-compress", "jpeg", "-quality", "80", "+profile", "*", output_path]
+           "-alpha", "remove", "-alpha", "off", "-compress", "jpeg", "-quality", "80"]
+           
+    # 2. Strip ALL existing metadata (Privacy First)
+    cmd.extend(["+profile", "*"])
+    
+    # 3. Inject FAKE metadata (Camouflage)
+    cmd.extend(get_fake_metadata_args())
+    
+    # 4. Output
+    cmd.append(output_path)
 
     try:
         log(f"Running: {' '.join(cmd)}")
@@ -89,8 +144,8 @@ def optimize_pdf(file_path, dpi):
 
 def show_notification(title, message):
     # Escape quotes for PowerShell
-    safe_msg = message.replace('"', "'").replace("\n", " ")
-    safe_title = title.replace('"', "'")
+    safe_msg = message.replace('"', "'" ).replace("\n", " ")
+    safe_title = title.replace('"', "'" )
     
     ps_script = f"""
     Add-Type -AssemblyName System.Windows.Forms
