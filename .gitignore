@@ -14,3 +14,10 @@ resources/*.exe
 # System
 Thumbs.db
 Desktop.ini
+
+# Temporary Test Files
+*.pdf
+*.png
+# Except resources
+!resources/*.png
+!1.png
