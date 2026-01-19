@@ -1,4 +1,4 @@
-# PDF Optimizer Suite 🚀 v3.9.3
+# PDF Optimizer Suite 🚀 v3.9.5
 
 [🇷🇺 Русский](README.md) | [🇺🇸 English](README.en.md)
 
@@ -11,7 +11,7 @@
 
 ## ✨ Features / Возможности
 
-### 🔬 Universal Scientific Engine (New in v3.9.3)
+### 🔬 Universal Scientific Engine (New in v3.9.5)
 **Trellis-Quantization Mimic** is now applied to ALL modes. Uses **Lanczos filtering** and **adaptive 95% resizing** to remove digital noise and sharpen text, achieving record-breaking size reduction (up to 90%) without losing readability.
 *Научный подход к сжатию во всех режимах: фильтрация Lanczos и адаптивный ресайз для идеальной четкости и минимального веса.*
 
@@ -47,7 +47,7 @@ Just right-click any of these files to optimize:
 
 ## 🛠 Installation / Установка
 
-1.  Download **[PDF_Optimizer_Suite_v3.9.3_Installer.exe](https://github.com/domadomlab/pdf-optimizer-win/releases/latest)**.
+1.  Download **[PDF_Optimizer_Suite_v3.9.5_Installer.exe](https://github.com/domadomlab/pdf-optimizer-win/releases/latest)**.
 2.  Run the installer.
 3.  Right-click any PDF or Word file to start.
 

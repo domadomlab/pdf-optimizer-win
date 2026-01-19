@@ -105,7 +105,7 @@ def find_magick():
     return None
 
 def optimize_pdf(file_path, dpi):
-    log(f"--- SESSION START v3.9.3: {file_path} ---")
+    log(f"--- SESSION START v3.9.5 (Scientific Universal): {file_path} ---")
     
     # Analyze Input File
     try:
@@ -129,19 +129,14 @@ def optimize_pdf(file_path, dpi):
         
         try:
             # Run VBScript to convert using MS Word
-            # cscript //Nologo script.vbs input output
             conv_cmd = ["cscript", "//NoLogo", converter_script, file_path, temp_pdf]
-            
-            # Use CREATE_NO_WINDOW
             creation_flags = 0x08000000 if sys.platform == 'win32' else 0
-            
             conv_res = subprocess.run(conv_cmd, capture_output=True, creationflags=creation_flags)
             
             if conv_res.returncode != 0 or not os.path.exists(temp_pdf):
                 log(f"Word Conversion Failed. Code: {conv_res.returncode}")
                 return "Error: MS Word conversion failed."
             
-            # Swap file_path to point to the new temp PDF for optimization
             file_path = temp_pdf
             log(f"Conversion successful. Temp PDF: {file_path}")
             
@@ -153,7 +148,6 @@ def optimize_pdf(file_path, dpi):
     gs_exe = find_ghostscript()
     if gs_exe:
         log(f"Ghostscript located: {gs_exe}")
-        # Принудительно задаем переменную для ImageMagick
         os.environ["MAGICK_GHOSTSCRIPT_EXE"] = gs_exe
         os.environ["PATH"] += os.pathsep + os.path.dirname(gs_exe)
     else:
@@ -165,35 +159,28 @@ def optimize_pdf(file_path, dpi):
         log("CRITICAL: ImageMagick not found!")
         return "Error: ImageMagick not found."
 
-    # Use original path for naming, stripping original extension (.doc/.pdf)
     output_path = f"{os.path.splitext(original_file_path)[0]}_{dpi}dpi.pdf"
     
-    # 1. Base command
+    # --- UNIVERSAL SCIENTIFIC PIPELINE (Trellis Mimic) ---
+    im_limits = ["-limit", "memory", "1GiB", "-limit", "map", "2GiB"]
+    
+    # Defaults
+    quality = "70"
+    read_dpi = str(dpi)
+    
+    # Special adjustment for Extreme mode
     if str(dpi) == "30":
-        # Extreme Mode (Method 5: Trellis-Quantization Mimic)
-        cmd = [magick_exe, "-limit", "memory", "1GiB", "-limit", "map", "2GiB", "-density", "150", "-units", "PixelsPerInch", file_path, 
-               "-alpha", "remove", "-alpha", "off", 
-               "-filter", "Lanczos", "-distort", "Resize", "95%", 
-               "-unsharp", "0x0.5",
-               "-sampling-factor", "4:2:0", 
-               "-compress", "jpeg", 
-               "-quality", "40"]
-    elif str(dpi) == "150":
-        # Scientific Email Mode (Trellis Mimic + Quality 70)
-        cmd = [magick_exe, "-limit", "memory", "1GiB", "-limit", "map", "2GiB", "-density", "150", "-units", "PixelsPerInch", file_path, 
-               "-alpha", "remove", "-alpha", "off", 
-               "-filter", "Lanczos", "-distort", "Resize", "95%", 
-               "-unsharp", "0x0.5",
-               "-sampling-factor", "4:2:0", 
-               "-compress", "jpeg", 
-               "-quality", "70"]
-    else:
-        # Standard Modes (Eco, Print, High)
-        cmd = [magick_exe, "-limit", "memory", "1GiB", "-limit", "map", "2GiB", "-density", str(dpi), "-units", "PixelsPerInch", file_path, 
-               "-alpha", "remove", "-alpha", "off", 
-               "-sampling-factor", "4:2:0", 
-               "-compress", "jpeg", 
-               "-quality", "70"]
+        quality = "40"
+        read_dpi = "150" # Read at 150, compress heavily
+
+    cmd = [magick_exe] + im_limits + [
+           "-density", read_dpi, "-units", "PixelsPerInch", file_path, 
+           "-alpha", "remove", "-alpha", "off", 
+           "-filter", "Lanczos", "-distort", "Resize", "95%", 
+           "-unsharp", "0x0.5",
+           "-sampling-factor", "4:2:0", 
+           "-compress", "jpeg", 
+           "-quality", quality]
            
     # 2. Strip ALL existing metadata (Privacy First)
     cmd.extend(["+profile", "*"])
@@ -207,8 +194,6 @@ def optimize_pdf(file_path, dpi):
     try:
         log(f"Running: {' '.join(cmd)}")
         
-        # Use CREATE_NO_WINDOW for robust window suppression on Windows
-        # and redirect stdin to DEVNULL to prevent hanging/errors in background
         creation_flags = 0
         if sys.platform == 'win32':
             creation_flags = 0x08000000  # CREATE_NO_WINDOW
@@ -224,8 +209,6 @@ def optimize_pdf(file_path, dpi):
         if result.returncode == 0:
             if os.path.exists(output_path):
                 output_size = os.path.getsize(output_path)
-                
-                # Statistics
                 diff = input_size - output_size
                 percent = (diff / input_size) * 100 if input_size > 0 else 0
                 
@@ -245,7 +228,6 @@ def optimize_pdf(file_path, dpi):
         log(f"EXCEPTION: {str(e)}")
         return str(e)
     finally:
-        # CLEANUP: Ensure temporary PDF is deleted regardless of success/error
         if temp_pdf and os.path.exists(temp_pdf):
             try: 
                 os.remove(temp_pdf)
@@ -254,7 +236,6 @@ def optimize_pdf(file_path, dpi):
                 log(f"Cleanup Error: {e}")
 
 def show_notification(title, message):
-    # Escape quotes for PowerShell
     safe_msg = message.replace('"', "'" ).replace("\n", " ")
     safe_title = title.replace('"', "'" )
     
@@ -271,13 +252,11 @@ def show_notification(title, message):
     """
     try:
         if sys.platform == 'win32':
-            # Use CREATE_NO_WINDOW for PowerShell too
             subprocess.Popen(
                 ["powershell", "-Command", ps_script],
                 creationflags=0x08000000
             )
         else:
-            # Fallback for Linux testing or other OS
             print(f"NOTIFICATION [{title}]: {message}")
     except Exception as e:
         log(f"Notification Error: {e}")
@@ -285,7 +264,6 @@ def show_notification(title, message):
 def main():
     if len(sys.argv) < 3: return
     res = optimize_pdf(sys.argv[2], sys.argv[1])
-    # Убираем блокирующее окно, используем тихое уведомление
     show_notification("PDF Optimizer Suite", res)
 
 if __name__ == "__main__":

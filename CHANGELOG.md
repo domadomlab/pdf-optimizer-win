@@ -1,5 +1,10 @@
 # Changelog - PDF Optimizer Suite
 
+## [3.9.5] - 2026-01-19
+### Fixed
+- **Critical Syntax Error**: Fixed a typo (extra parenthesis) in the Python core that prevented the application from running in v3.9.4.
+- **Registry Reliability**: Improved registry path handling with proper backslash escaping in the Python registration engine.
+
 ## [3.9.3] - 2026-01-19
 ### Added
 - **Universal Trellis Mimic**: The scientific compression engine (Lanczos + Resize 95% + Unsharp) is now applied to **ALL** quality presets (75, 150, 200, 300 DPI). This ensures maximum efficiency and text clarity across the entire application.

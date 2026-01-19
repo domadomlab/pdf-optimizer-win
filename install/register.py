@@ -81,7 +81,7 @@ def main():
                 continue
 
             for dpi, name in menu_names.items():
-                key_base = f"{root_path}\PDFOptimizer{dpi}"
+                key_base = f"{root_path}\\PDFOptimizer{dpi}"
                 
                 # 1. Menu Name
                 if register_key(root_hive, key_base, "", name):
@@ -93,7 +93,7 @@ def main():
                 # 3. Command
                 # wscript.exe "launcher" "python" "script" dpi "%1"
                 cmd_val = f'wscript.exe "{launcher_vbs}" "{python_exe}" "{script_path}" {dpi} "%1"'
-                register_key(root_hive, f"{key_base}\command", "", cmd_val)
+                register_key(root_hive, f"{key_base}\\command", "", cmd_val)
 
         except Exception as e:
             print(f"Skipping root {root_path}: {e}")
