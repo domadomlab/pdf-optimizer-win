@@ -1,89 +1,54 @@
-# 🚀 PDF Optimizer Suite v3.6.3
+# PDF Optimizer Suite 🚀
 
-> **The Ghost in the Shell.**  
-> *Professional compression & privacy tool integrated directly into Windows Explorer.*
+[![Release](https://img.shields.io/github/v/release/domadomlab/pdf-optimizer-win?style=for-the-badge&color=blue)](https://github.com/domadomlab/pdf-optimizer-win/releases/latest)
+[![Platform](https://img.shields.io/badge/Platform-Windows%2010%2F11%2FLTSC-win?style=for-the-badge)](https://www.microsoft.com/windows)
+[![License](https://img.shields.io/github/license/domadomlab/pdf-optimizer-win?style=for-the-badge)](LICENSE)
 
-![Version](https://img.shields.io/badge/version-3.6.3-blueviolet?style=for-the-badge)
-![Platform](https://img.shields.io/badge/Windows-11%20%2F%2010-0078D6?style=for-the-badge&logo=windows)
-![Privacy](https://img.shields.io/badge/Privacy-100%25-success?style=for-the-badge&logo=torproject)
-![Downloads](https://img.shields.io/github/downloads/domadomlab/pdf-optimizer-win/total?style=for-the-badge&color=orange)
-
----
-
-## 🕶️ What is this?
-
-This is not just a PDF compressor. It is a **stealth utility** for your workflow.
-**PDF Optimizer Suite** adds powerful, server-grade processing tools to your Right-Click Menu. It runs offline, silently, and leaves no trace.
-
-## 🔥 Killer Features (v3.6.3)
-
-### 📦 Smart Compression
-**Optimized JPEG Engine.**
-We use a tuned **JPEG** algorithm with **4:2:0 Chroma Subsampling** and Quality 70.
-*   **Reliable reduction:** Consistently smaller files without the bloat.
-*   **No artifacts:** Text remains sharp enough for official use.
-*   **Scan-like look:** Documents look like authentic high-quality scans.
-
-### 🥷 Camouflage Mode
-**Plausible Deniability Engine.**
-When you optimize a file, the software strips all original metadata (software traces, timestamps) and injects **fake digital fingerprints** of real physical scanners.
-*   Your PDF will look like it was scanned on an **HP LaserJet**, **Xerox WorkCentre**, or **Canon iR-ADV**.
-*   Even the internal PDF structure is rewritten to mimic hardware encoding.
-
-### 🔇 Silent Batch Processing
-**Efficiency Redefined.**
-Select 1 file or 100 files. Right-click. Done.
-*   No annoying popup windows.
-*   System Tray notifications keep you informed without stealing focus.
-*   Multi-threaded processing handles bulk tasks in seconds.
-
-### ⚡ Native Integration
-*   **Power Registration:** Uses advanced PowerShell injection to ensure the menu works on ANY Windows locale (perfect Cyrillic support).
-*   **Seamless Updates:** Updates the Windows Shell instantly—no restart required.
+**The ultimate right-click tool for reducing PDF size, ensuring privacy, and converting documents.**
+**Идеальный инструмент контекстного меню для сжатия PDF, защиты приватности и конвертации документов.**
 
 ---
 
-## 🇷🇺 Русское описание
+## ✨ Features / Возможности
 
-**PDF Optimizer Suite** — это профессиональный инструмент для тех, кто ценит время и приватность. Мы перенесли серверные технологии сжатия прямо в контекстное меню Windows.
+### 📉 Smart Compression / Умное Сжатие
+Drastically reduce file size (up to 90%) while maintaining print-ready quality.
+*   **75 DPI (Eco):** For archives and drafts.
+*   **150 DPI (Email):** Perfect balance for sharing.
+*   **200 DPI (Print):** High quality for documents.
+*   **300 DPI (High):** Maximum fidelity.
 
-### Почему это круто?
+### 🔄 Word Integration / Поддержка Word
+Convert `.doc` and `.docx` directly to optimized PDF via the context menu. Requires MS Word installed.
+*Конвертация `.doc` и `.docx` в PDF прямо из меню (требуется установленный Word).*
 
-1.  **JPEG 2000 (New!):** Новый движок сжатия. Файлы стали на 30-50% легче, а текст — четче. Используется профессиональный стандарт архивации.
-2.  **Режим "Хамелеон":** Программа не просто сжимает файл, она "пересобирает" его, подменяя метаданные. Ваш PDF будет выглядеть так, будто его только что отсканировали на офисном МФУ (HP, Canon, Xerox). Никаких следов Word или PDF редакторов.
-3.  **Тихий режим:** Выделите 50 файлов, нажмите "Оптимизировать" и продолжайте работать. Уведомления появятся в трее, не прерывая ваш рабочий процесс.
-4.  **Умная установка:** Инсталлятор сам найдет или скачает Python и настроит все зависимости.
+### 🕵️ Camouflage & Privacy / Маскировка
+*   **Metadata Stripping:** Removes all Author, Creator, and GPS tags.
+*   **Camouflage Mode:** Injects fake metadata to make the PDF look like a scan from a physical device (HP, Canon, Xerox).
+*   *Очистка метаданных и маскировка под сканер.*
 
-### 📥 [Download Latest Installer / Скачать](https://github.com/domadomlab/pdf-optimizer-win/releases/latest)
-
----
-
-## 🏗️ Build from Source / Сборка
-
-If you want to build the installer yourself (requires NSIS):
-
-1.  Clone repository:
-    ```bash
-    git clone https://github.com/domadomlab/pdf-optimizer-win.git
-    cd pdf-optimizer-win
-    ```
-2.  **Download dependencies** (Python, Ghostscript, ImageMagick):
-    *   **Windows:** Run `download_deps.bat`
-    *   **Linux/WSL:** Run `bash download_deps.sh`
-3.  Compile with NSIS:
-    *   **Windows:** Right-click `installer.nsi` -> *Compile NSIS Script*
-    *   **Linux:** `makensis installer.nsi`
+### 🛡️ Corporate Ready / Для Корпораций
+*   **Portable Core:** Embedded Python engine. No admin rights required for runtime.
+*   **Silent Operation:** No console windows, only system tray notifications.
+*   **LTSC Compatible:** Works on restricted systems (bypasses PowerShell blocks).
 
 ---
 
-## 🛠️ Profiles / Режимы
+## 🚀 Installation / Установка
 
-| Profile | DPI | Use Case |
-| :--- | :--- | :--- |
-| **Eco** | 75 | **Maximum Compression.** For archives and quick previews. |
-| **Email** | 150 | **Balanced.** Perfect for email attachments. Crystal clear text. |
-| **Print** | 200 | **Office Standard.** Great for printing and official documents. |
-| **High** | 300 | **Professional.** Pre-press quality. Retains fine details. |
+1.  Download the latest [Release](https://github.com/domadomlab/pdf-optimizer-win/releases).
+2.  Run `PDF_Optimizer_Suite_vX.X.X_Installer.exe`.
+3.  Right-click any PDF or Word file to see the magic.
 
 ---
-*Developed by DomCorp (c) 2026. Open Source. MIT License.*
+
+## 🛠 Tech Stack / Технологии
+
+*   **Core:** Python 3.12 (Embedded)
+*   **Imaging:** ImageMagick 7 + Ghostscript
+*   **UI:** Native Windows Context Menu (Registry)
+*   **Automation:** VBScript + Win32 COM
+
+---
+
+*(c) 2026 DomCorp. Licensed under MIT.*
