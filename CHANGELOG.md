@@ -1,5 +1,69 @@
 # Changelog - PDF Optimizer Suite
 
+## [3.8.1] - 2026-01-19
+### Fixed
+- **Naming Logic**: Fixed a bug where converted Word documents resulted in filenames like `~temp_Name.doc_75dpi.pdf`. Now the output filename is correctly derived from the original document name: `Name_75dpi.pdf`.
+- **Temp Cleanup**: Improved temporary file cleanup logic to ensure intermediate PDF files are always removed, even if optimization fails.
+
+## [3.8.0] - 2026-01-19
+### Added
+- **Word to PDF Conversion**: Added support for `.docx` and `.doc` files. The application now uses an installed Microsoft Word instance (via VBScript automation) to silently convert documents to PDF before optimizing them. This ensures 100% layout fidelity.
+- **Extended Context Menu**: The "PDF: ..." context menu options now appear for Word documents as well.
+
+## [3.7.2] - 2026-01-19
+### Fixed
+- **Registration Engine**: Replaced VBScript/PowerShell registration logic with a **Native Python Script** (`register.py`). Since the application now includes its own Python runtime, this ensures 100% reliable registry modification with full Unicode support and no dependency on Windows Script Host or PowerShell policies.
+
+## [3.7.1] - 2026-01-19
+### Fixed
+- **Corporate Compatibility**: Replaced PowerShell registration script with **VBScript**. This bypasses "Execution Policy" restrictions and AppLocker blocks common in corporate environments, ensuring the context menu is successfully created.
+- **Path Handling**: Improved path escaping in the generated VBScript to handle spaces and special characters robustly.
+
+## [3.7.0] - 2026-01-19
+### Added
+- **Portable Architecture**: Switched to **Embedded Python 3.12**. The application now carries its own isolated Python environment, eliminating the need for system-wide installation. This resolves compatibility issues on Corporate/LTSC Windows versions with strict security policies (GPO, AppLocker).
+- **Setup Reliability**: Removed all dependency on system PATH or Registry for Python detection.
+### Changed
+- **Installer Size**: Increased by ~10 MB due to embedded Python runtime.
+
+## [3.6.5] - 2026-01-19
+### Fixed
+- **Python Detection**: Improved `Setup_Full.bat` to perform a double-check for Python. It now verifies the direct existence of `pythonw.exe` in standard directories if the `python` command is missing from PATH, preventing false negatives during installation.
+
+## [3.6.4] - 2026-01-19
+### Fixed
+- **Zero-Window Policy**: Completely switched the execution engine to **VBScript** (`launcher.vbs`).
+    - The registry now calls `wscript.exe` (Windows Script Host), which natively supports running commands without ANY console window.
+    - This bypasses `py.exe` and `cmd.exe` window flashes entirely.
+    - Python and ImageMagick are invoked as hidden subprocesses from within the VBS wrapper.
+
+## [3.6.3] - 2026-01-19
+### Fixed
+- **Compression Size**: Reverted from JPEG 2000 back to standard **JPEG** engine. The JP2 implementation caused file size inflation on certain document types.
+- **Console Windows**: Implemented `CREATE_NO_WINDOW` flag and `stdin` redirection for all subprocesses. This definitively solves the issue of flashing console windows during operation.
+### Changed
+- **Optimization Strategy**: Now using **JPEG Quality 70** + **Chroma Subsampling 4:2:0**. This combination provides the most reliable file size reduction (~15-20% better than standard settings) while maintaining text legibility.
+- **Logging**: Added detailed file size statistics (Input vs Output) to the log file and user notification.
+
+## [3.6.2] - 2026-01-19
+### Changed
+- **Compression Engine**: Switched from standard JPEG to **JPEG 2000 (.jp2)**. This modern algorithm provides 30-50% better compression at the same visual quality.
+- **Quality Tuning**: Adjusted default quality setting from 80 to **75**. Combined with JPEG 2000, this offers superior file size reduction without visible artifacts.
+- **Chroma Subsampling**: Enabled **4:2:0 subsampling**. This optimizes color data storage, significantly reducing file size for scanned documents while keeping text sharp.
+- **Privacy**: Retained strict metadata stripping and "Camouflage Mode" from v3.6.1.
+
+## [3.6.1] - 2026-01-19
+### Added
+- **Camouflage Mode**: Added fake metadata injection. Optimized files now masquerade as scans from popular office hardware (HP, Canon, Xerox) to ensure privacy and plausible deniability.
+- **Silent Mode**: Replaced intrusive popup windows with non-blocking Windows System Tray notifications (via PowerShell).
+- **Power Registration**: Implemented Base64-encoded PowerShell commands for registry injection, solving all character encoding issues with Cyrillic paths.
+- **Seamless Updates**: Added `SHChangeNotify` call to instantly refresh Windows Explorer context menu after installation.
+
+## [3.6.0] - 2026-01-18
+### Added
+- **Camouflage Foundation**: Initial implementation of metadata randomization logic.
+- **Silent Notifications**: Beta version of PowerShell-based notification system.
+
 ## [3.5.0] - 2026-01-17
 ### Added
 - **Multilingual Support**: The installer now prompts the user to select a language (English/Russian) at startup.

@@ -1,9 +1,9 @@
-# 🚀 PDF Optimizer Suite v3.6
+# 🚀 PDF Optimizer Suite v3.6.3
 
 > **The Ghost in the Shell.**  
 > *Professional compression & privacy tool integrated directly into Windows Explorer.*
 
-![Version](https://img.shields.io/github/v/release/domadomlab/pdf-optimizer-win?style=for-the-badge&color=blueviolet)
+![Version](https://img.shields.io/badge/version-3.6.3-blueviolet?style=for-the-badge)
 ![Platform](https://img.shields.io/badge/Windows-11%20%2F%2010-0078D6?style=for-the-badge&logo=windows)
 ![Privacy](https://img.shields.io/badge/Privacy-100%25-success?style=for-the-badge&logo=torproject)
 ![Downloads](https://img.shields.io/github/downloads/domadomlab/pdf-optimizer-win/total?style=for-the-badge&color=orange)
@@ -15,9 +15,16 @@
 This is not just a PDF compressor. It is a **stealth utility** for your workflow.
 **PDF Optimizer Suite** adds powerful, server-grade processing tools to your Right-Click Menu. It runs offline, silently, and leaves no trace.
 
-## 🔥 Killer Features (v3.6)
+## 🔥 Killer Features (v3.6.3)
 
-### 🥷 Camouflage Mode (New!)
+### 📦 Smart Compression
+**Optimized JPEG Engine.**
+We use a tuned **JPEG** algorithm with **4:2:0 Chroma Subsampling** and Quality 70.
+*   **Reliable reduction:** Consistently smaller files without the bloat.
+*   **No artifacts:** Text remains sharp enough for official use.
+*   **Scan-like look:** Documents look like authentic high-quality scans.
+
+### 🥷 Camouflage Mode
 **Plausible Deniability Engine.**
 When you optimize a file, the software strips all original metadata (software traces, timestamps) and injects **fake digital fingerprints** of real physical scanners.
 *   Your PDF will look like it was scanned on an **HP LaserJet**, **Xerox WorkCentre**, or **Canon iR-ADV**.
@@ -42,9 +49,10 @@ Select 1 file or 100 files. Right-click. Done.
 
 ### Почему это круто?
 
-1.  **Режим "Хамелеон" (v3.6):** Программа не просто сжимает файл, она "пересобирает" его, подменяя метаданные. Ваш PDF будет выглядеть так, будто его только что отсканировали на офисном МФУ (HP, Canon, Xerox). Никаких следов Word или PDF редакторов.
-2.  **Тихий режим:** Выделите 50 файлов, нажмите "Оптимизировать" и продолжайте работать. Уведомления появятся в трее, не прерывая ваш рабочий процесс.
-3.  **Умная установка:** Инсталлятор сам найдет или скачает Python и настроит все зависимости.
+1.  **JPEG 2000 (New!):** Новый движок сжатия. Файлы стали на 30-50% легче, а текст — четче. Используется профессиональный стандарт архивации.
+2.  **Режим "Хамелеон":** Программа не просто сжимает файл, она "пересобирает" его, подменяя метаданные. Ваш PDF будет выглядеть так, будто его только что отсканировали на офисном МФУ (HP, Canon, Xerox). Никаких следов Word или PDF редакторов.
+3.  **Тихий режим:** Выделите 50 файлов, нажмите "Оптимизировать" и продолжайте работать. Уведомления появятся в трее, не прерывая ваш рабочий процесс.
+4.  **Умная установка:** Инсталлятор сам найдет или скачает Python и настроит все зависимости.
 
 ### 📥 [Download Latest Installer / Скачать](https://github.com/domadomlab/pdf-optimizer-win/releases/latest)
 

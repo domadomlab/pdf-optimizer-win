@@ -30,5 +30,5 @@ if not defined PY_EXE (
 )
 
 :: Run the script
-start "" "!PY_EXE!" "%~dp0optimizer.py" !DPI! "!PDF_FILE!"
+start "" "!PY_EXE!" "%~dp0optimizer.pyw" !DPI! "!PDF_FILE!"
 
