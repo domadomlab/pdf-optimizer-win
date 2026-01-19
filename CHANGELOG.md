@@ -1,5 +1,9 @@
 # Changelog - PDF Optimizer Suite
 
+## [3.8.4] - 2026-01-19
+### Fixed
+- **Word Template Lock**: Fixed an issue where MS Word would prompt about `Normal.dot` being in use or modified. Added explicit suppression of template save prompts in `docx2pdf.vbs`.
+
 ## [3.8.3] - 2026-01-19
 ### Fixed
 - **Critical Syntax Error**: Fixed a typo (extra parenthesis) in the optimization script that prevented the application from running in v3.8.2.
