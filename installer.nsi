@@ -5,7 +5,7 @@
 ;--------------------------------
 ;General
 
-  Name "PDF Optimizer Suite"
+  Name "PDF Optimizer Suite LTS"
   OutFile "PDF_Optimizer_Suite_v4.3.0_Installer.exe"
   InstallDir "$PROGRAMFILES64\DomCorp\PDFOptimizer"
   InstallDirRegKey HKCU "Software\DomCorp\PDFOptimizer" ""

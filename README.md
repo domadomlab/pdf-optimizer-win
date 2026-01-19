@@ -1,4 +1,4 @@
-# PDF Optimizer Suite 🚀 v4.3.0
+# PDF Optimizer Suite 🚀 v4.3.0 LTS
 
 [🇷🇺 Русский](README.md) | [🇺🇸 English](README.en.md)
 

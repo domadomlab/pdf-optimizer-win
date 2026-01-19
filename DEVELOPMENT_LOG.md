@@ -1,6 +1,6 @@
 # PDF Optimizer Suite - Отчет о разработке (19 января 2026)
 
-## Статус проекта: v4.3.0 (Win) / v3.2.0 (Linux) - "Scientific Parity Update"
+## Статус проекта: v4.3.0 LTS (Long Term Support) (Win) / v3.2.0 (Linux) - "Scientific Parity Update"
 
 ### Ключевые достижения (v4.3.0 -> v4.3.0 / v3.2.0):
 
