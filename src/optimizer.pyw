@@ -105,7 +105,7 @@ def find_magick():
     return None
 
 def optimize_pdf(file_path, dpi):
-    log(f"--- SESSION START v3.6.3 (JPEG 4:2:0 Fix): {file_path} ---")
+    log(f"--- SESSION START v3.8.2: {file_path} ---")
     
     # Analyze Input File
     try:
@@ -219,23 +219,19 @@ def optimize_pdf(file_path, dpi):
                 return "Error: Output file missing."
         else:
             log(f"MAGICK ERROR: {result.stderr}")
-            # Cleanup temp file if it was created
-            if temp_pdf and os.path.exists(temp_pdf):
-                try: os.remove(temp_pdf)
-                except: pass
             return f"Error: {result.stderr}"
-            
-        # Cleanup temp file on success
-        if temp_pdf and os.path.exists(temp_pdf):
-            try: os.remove(temp_pdf)
-            except: pass
             
     except Exception as e:
         log(f"EXCEPTION: {str(e)}")
-        if temp_pdf and os.path.exists(temp_pdf):
-            try: os.remove(temp_pdf)
-            except: pass
         return str(e)
+    finally:
+        # CLEANUP: Ensure temporary PDF is deleted regardless of success/error
+        if temp_pdf and os.path.exists(temp_pdf):
+            try: 
+                os.remove(temp_pdf)
+                log(f"Cleanup: Removed temporary file {temp_pdf}")
+            except Exception as e: 
+                log(f"Cleanup Error: {e}")
 
 def show_notification(title, message):
     # Escape quotes for PowerShell
@@ -257,7 +253,7 @@ def show_notification(title, message):
         if sys.platform == 'win32':
             # Use CREATE_NO_WINDOW for PowerShell too
             subprocess.Popen(
-                ["powershell", "-Command", ps_script], 
+                ["powershell", "-Command", ps_script],
                 creationflags=0x08000000
             )
         else:

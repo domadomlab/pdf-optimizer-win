@@ -1,5 +1,13 @@
 # Changelog - PDF Optimizer Suite
 
+## [3.8.3] - 2026-01-19
+### Fixed
+- **Critical Syntax Error**: Fixed a typo (extra parenthesis) in the optimization script that prevented the application from running in v3.8.2.
+
+## [3.8.2] - 2026-01-19
+### Fixed
+- **Temp File Leak**: Rewrote the optimization logic to use a `try...finally` block. This guarantees that temporary PDF files generated during Word conversion are deleted in 100% of cases (success, error, or crash).
+
 ## [3.8.1] - 2026-01-19
 ### Fixed
 - **Naming Logic**: Fixed a bug where converted Word documents resulted in filenames like `~temp_Name.doc_75dpi.pdf`. Now the output filename is correctly derived from the original document name: `Name_75dpi.pdf`.
