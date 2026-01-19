@@ -105,7 +105,7 @@ def find_magick():
     return None
 
 def optimize_pdf(file_path, dpi):
-    log(f"--- SESSION START v3.9.0: {file_path} ---")
+    log(f"--- SESSION START v3.9.2: {file_path} ---")
     
     # Analyze Input File
     try:
@@ -171,16 +171,25 @@ def optimize_pdf(file_path, dpi):
     # 1. Base command
     if str(dpi) == "30":
         # Extreme Mode (Method 5: Trellis-Quantization Mimic)
-        cmd = [magick_exe, "-density", "150", "-units", "PixelsPerInch", file_path, 
+        cmd = [magick_exe, "-limit", "memory", "1GiB", "-limit", "map", "2GiB", "-density", "150", "-units", "PixelsPerInch", file_path, 
                "-alpha", "remove", "-alpha", "off", 
                "-filter", "Lanczos", "-distort", "Resize", "95%", 
                "-unsharp", "0x0.5",
                "-sampling-factor", "4:2:0", 
                "-compress", "jpeg", 
                "-quality", "40"]
+    elif str(dpi) == "150":
+        # Scientific Email Mode (Trellis Mimic + Quality 70)
+        cmd = [magick_exe, "-limit", "memory", "1GiB", "-limit", "map", "2GiB", "-density", "150", "-units", "PixelsPerInch", file_path, 
+               "-alpha", "remove", "-alpha", "off", 
+               "-filter", "Lanczos", "-distort", "Resize", "95%", 
+               "-unsharp", "0x0.5",
+               "-sampling-factor", "4:2:0", 
+               "-compress", "jpeg", 
+               "-quality", "70"]
     else:
-        # Standard Modes
-        cmd = [magick_exe, "-density", str(dpi), "-units", "PixelsPerInch", file_path, 
+        # Standard Modes (Eco, Print, High)
+        cmd = [magick_exe, "-limit", "memory", "1GiB", "-limit", "map", "2GiB", "-density", str(dpi), "-units", "PixelsPerInch", file_path, 
                "-alpha", "remove", "-alpha", "off", 
                "-sampling-factor", "4:2:0", 
                "-compress", "jpeg", 

@@ -1,4 +1,4 @@
-# PDF Optimizer Suite 🚀 v3.9.0
+# PDF Optimizer Suite 🚀 v3.9.2
 
 [🇷🇺 Русский](README.md) | [🇺🇸 English](README.en.md)
 
@@ -50,7 +50,7 @@ Just right-click any of these files to optimize:
 
 ## 🛠 Installation / Установка
 
-1.  Download **[PDF_Optimizer_Suite_v3.9.0_Installer.exe](https://github.com/domadomlab/pdf-optimizer-win/releases/latest)**.
+1.  Download **[PDF_Optimizer_Suite_v3.9.2_Installer.exe](https://github.com/domadomlab/pdf-optimizer-win/releases/latest)**.
 2.  Run the installer (extracts portable engine).
 3.  Right-click any PDF or Word file to start.
 
