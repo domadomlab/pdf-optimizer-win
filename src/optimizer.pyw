@@ -31,7 +31,12 @@ def log(message):
     try:
         with open(LOG_FILE, "a", encoding="utf-8") as f:
             f.write(f"[{timestamp}] {message}\n")
-    except: pass
+    except:
+        try:
+            temp_log = os.path.join(tempfile.gettempdir(), 'pdf_optimizer_fallback.log')
+            with open(temp_log, "a", encoding="utf-8") as f:
+                f.write(f"[{timestamp}] {message}\n")
+        except: pass
 
 def log_error(e):
     log(f"CRITICAL ERROR: {str(e)}")
@@ -43,24 +48,23 @@ def format_size(size_bytes):
         size_bytes /= 1024.0
     return f"{size_bytes:.2f} TB"
 
-# --- Matched Scanner Profiles (Logic Integrity) ---
+# --- Matched Global Scanner Profiles 2024-2025 ---
 SCANNER_PROFILES = [
-    {"Brand": "HP", "Producer": "HP LaserJet MFP M426fdw", "Creator": "HP Scan"},
-    {"Brand": "HP", "Producer": "HP Color LaserJet Pro MFP M283fdw", "Creator": "HP Smart"},
-    {"Brand": "Canon", "Producer": "Canon iR-ADV C5535", "Creator": "Canon PDF Platform"},
-    {"Brand": "Canon", "Producer": "Canon MF Scan Utility", "Creator": "Canon MF643Cdw"},
-    {"Brand": "Xerox", "Producer": "Xerox WorkCentre 7845", "Creator": "Xerox WorkCentre"},
-    {"Brand": "Xerox", "Producer": "Xerox VersaLink C405", "Creator": "Xerox MFP"},
-    {"Brand": "Kyocera", "Producer": "Kyocera ECOSYS M2540dn", "Creator": "KM-4050 Scanner"},
-    {"Brand": "Brother", "Producer": "Brother MFC-L2710DW", "Creator": "Brother iPrint&Scan"},
-    {"Brand": "Epson", "Producer": "Epson Scan 2", "Creator": "EPSON Scan"},
+    {"Brand": "Fujitsu", "Producer": "Fujitsu ScanSnap iX1600", "Creator": "ScanSnap Manager"},
+    {"Brand": "Ricoh", "Producer": "Ricoh IM C4500", "Creator": "Ricoh Scan Router"},
+    {"Brand": "Konica Minolta", "Producer": "Konica Minolta bizhub C250i", "Creator": "bizhub Scan Service"},
+    {"Brand": "HP", "Producer": "HP LaserJet Enterprise MFP M776z", "Creator": "HP Scan Extended"},
+    {"Brand": "Canon", "Producer": "Canon iR-ADV DX C5840i", "Creator": "imageRUNNER ADVANCE"},
+    {"Brand": "Xerox", "Producer": "Xerox AltaLink C8130", "Creator": "Xerox AltaLink Service"},
+    {"Brand": "Epson", "Producer": "Epson WorkForce DS-30000", "Creator": "Epson Document Capture"},
+    {"Brand": "Kyocera", "Producer": "Kyocera ECOSYS M3645dn", "Creator": "Kyocera Quick Scan"},
+    {"Brand": "Brother", "Producer": "Brother ADS-4700W", "Creator": "Brother ControlCenter4"},
 ]
 
 def get_matched_metadata(profile):
     args = []
     args.extend(["-define", f"pdf:Producer={profile['Producer']}"])
     args.extend(["-define", f"pdf:Creator={profile['Creator']}"])
-    
     titles = ["Scanned Document", "Scan", "Doc", "Document", "Scan_2026", "CCF_0001"]
     args.extend(["-define", f"pdf:Title={random.choice(titles)}"])
     args.extend(["-define", "pdf:Author=Scanner"])
@@ -69,7 +73,7 @@ def get_matched_metadata(profile):
 def find_ghostscript():
     gs = shutil.which("gswin64c") or shutil.which("gswin32c")
     if gs: return gs
-    pf = os.environ.get("ProgramFiles", "C:\\ Program Files")
+    pf = os.environ.get("ProgramFiles", "C:\\Program Files")
     gs_base = os.path.join(pf, "gs")
     if os.path.exists(gs_base):
         for folder in reversed(os.listdir(gs_base)):
@@ -82,7 +86,7 @@ def find_ghostscript():
 def find_magick():
     magick = shutil.which("magick")
     if magick: return magick
-    pf = os.environ.get("ProgramFiles", "C:\\ Program Files")
+    pf = os.environ.get("ProgramFiles", "C:\\Program Files")
     if os.path.exists(pf):
         for folder in os.listdir(pf):
             if "imagemagick" in folder.lower():
@@ -102,9 +106,9 @@ def get_page_count(magick_exe, file_path):
     return 1
 
 def process_single_page(page_idx, file_path, read_dpi, quality, im_limits, magick_exe, tmpdir, metadata_args):
-    page_out = os.path.join(tmpdir, f"page_{page_idx:04d}.pdf")
+    page_out = os.path.join(tmpdir, f"page_{{page_idx:04d}}.pdf")
     cmd = [magick_exe] + im_limits + [
-           "-density", read_dpi, f"{file_path}[{page_idx}]", 
+           "-density", read_dpi, f"{file_path}[{{page_idx}}]", 
            "-alpha", "remove", "-alpha", "off", 
            "-filter", "Lanczos", "-distort", "Resize", "95%", 
            "-unsharp", "0x0.5",
@@ -117,7 +121,7 @@ def process_single_page(page_idx, file_path, read_dpi, quality, im_limits, magic
     return page_out if res.returncode == 0 and os.path.exists(page_out) else None
 
 def optimize_pdf(file_path, dpi):
-    log(f"--- SESSION START v4.2.1 (Logic Fix): {file_path} ---")
+    log(f"--- SESSION START v4.3.0 (Global Profiles): {file_path} ---")
     try:
         if not os.path.exists(file_path): return "Error: File missing."
         input_size = os.path.getsize(file_path)
@@ -131,7 +135,7 @@ def optimize_pdf(file_path, dpi):
     ext = os.path.splitext(file_path)[1].lower()
     if ext in ['.doc', '.docx']:
         converter_script = os.path.join(BASE_DIR, "src", "docx2pdf.vbs")
-        temp_pdf_from_word = os.path.join(os.path.dirname(file_path), f"~temp_{os.path.basename(file_path)}.pdf")
+        temp_pdf_from_word = os.path.join(os.path.dirname(file_path), f"~temp_{{os.path.basename(file_path)}}.pdf")
         try:
             conv_cmd = ["cscript", "//NoLogo", converter_script, file_path, temp_pdf_from_word]
             creation_flags = 0x08000000 if sys.platform == 'win32' else 0
@@ -147,15 +151,14 @@ def optimize_pdf(file_path, dpi):
     if not gs_exe or not magick_exe: return "Error: External tools missing."
 
     page_count = get_page_count(magick_exe, file_path)
-    output_path = f"{os.path.splitext(original_file_path)[0]}_{dpi}dpi.pdf"
+    output_path = f"{os.path.splitext(original_file_path)[0]}_{{dpi}}dpi.pdf"
     
     im_limits = ["-limit", "memory", "512MiB", "-limit", "map", "1GiB", "-limit", "area", "256MiB"]
     quality = "40" if str(dpi) == "30" else "70"
     read_dpi = "150" if str(dpi) == "30" else str(dpi)
     
-    # Selection of matched profile
     profile = random.choice(SCANNER_PROFILES)
-    log(f"Applying Matched Profile: {profile['Brand']} ({profile['Producer']})")
+    log(f"Selected Global Profile: {profile['Brand']} ({profile['Producer']})")
     metadata_args = get_matched_metadata(profile)
 
     success = False
@@ -183,8 +186,10 @@ def optimize_pdf(file_path, dpi):
 
         if success and os.path.exists(output_path):
             output_size = os.path.getsize(output_path)
-            pct = ((input_size - output_size) / input_size) * 100 if input_size > 0 else 0
-            return f"Done! Reduced by {pct:.0f}% ({format_size(output_size)})")
+            diff = input_size - output_size
+            pct = (diff / input_size) * 100 if input_size > 0 else 0
+            log(f"FINAL SUCCESS: {format_size(output_size)} ({pct:.1f}% reduction)")
+            return f"Done! Reduced by {pct:.0f}% ({format_size(output_size)})"
         return "Optimization failed."
     except Exception as e:
         log_error(e)
