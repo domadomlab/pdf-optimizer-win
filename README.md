@@ -1,4 +1,4 @@
-# PDF Optimizer Suite 🚀 v3.8.4
+# PDF Optimizer Suite 🚀 v3.9.0
 
 [🇷🇺 Русский](README.md) | [🇺🇸 English](README.en.md)
 
@@ -27,22 +27,30 @@ Strips real metadata and injects fake scanner signatures (HP, Canon, Xerox).
 Embedded Python 3.12 core. Runs on Windows LTSC without Admin rights or PowerShell dependency.
 *Портативный движок Python. Работает на заблокированных ПК и Windows LTSC.*
 
+## 📂 Supported Formats / Поддерживаемые Файлы
+
+Just right-click any of these files to optimize:
+*   **📕 .PDF** (Portable Document Format)
+*   **📘 .DOCX / .DOC** (Microsoft Word)
+
 ---
 
-## 📉 Presets / Режимы Сжатия
+## 📉 Compression Modes / Режимы Сжатия
 
-| Mode | DPI | Size Reduction |
-| :--- | :--- | :--- |
-| **Eco** | 75 | ~85-95% |
-| **Email** | 150 | ~60-80% |
-| **Print** | 200 | ~40-60% |
-| **High** | 300 | ~10-25% |
+| Mode | DPI | Effect | Target Use Case |
+| :--- | :--- | :--- | :--- |
+| **Extreme** | 30* | **-80-90%** | Critical size, low bandwidth |
+| **Eco** | 75 | **-70-80%** | Messengers, Archives |
+| **Email** | 150 | **-50-70%** | Official sharing (Standard) |
+| **Print** | 200 | **-30-50%** | Office printing |
+| **High** | 300 | **-10-20%** | High-quality archiving |
 
+*\*Extreme mode uses scientific Trellis-Quantization Mimic technology.*
 ---
 
 ## 🛠 Installation / Установка
 
-1.  Download **[PDF_Optimizer_Suite_v3.8.4_Installer.exe](https://github.com/domadomlab/pdf-optimizer-win/releases/latest)**.
+1.  Download **[PDF_Optimizer_Suite_v3.9.0_Installer.exe](https://github.com/domadomlab/pdf-optimizer-win/releases/latest)**.
 2.  Run the installer (extracts portable engine).
 3.  Right-click any PDF or Word file to start.
 

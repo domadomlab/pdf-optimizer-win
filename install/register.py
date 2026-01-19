@@ -39,6 +39,7 @@ def main():
     # Menu Names
     if lang_code == 'RU':
         menu_names = {
+            '30': 'PDF: Экстрим (Min Size)',
             '75': 'PDF: Эко (75 dpi)',
             '150': 'PDF: Почта (150 dpi)',
             '200': 'PDF: Печать (200 dpi)',
@@ -46,6 +47,7 @@ def main():
         }
     else:
         menu_names = {
+            '30': 'PDF: Extreme (Min Size)',
             '75': 'PDF: Eco (75 dpi)',
             '150': 'PDF: Email (150 dpi)',
             '200': 'PDF: Print (200 dpi)',

@@ -7,8 +7,8 @@ set "LOG_DIR=%~1"
 if "%LOG_DIR%"=="" set "LOG_DIR=%TEMP%"
 set "LOG_FILE=%LOG_DIR%\pdf_optimizer_debug.log"
 
-echo Starting Portable Installation v3.8.4...
-echo --- SETUP LOG v3.8.4 START --- >> "%LOG_FILE%"
+echo Starting Portable Installation v3.9.0...
+echo --- SETUP LOG v3.9.0 START --- >> "%LOG_FILE%"
 
 :: 1. Python (Embedded - Skipped check)
 echo [1/3] Configuring Embedded Python...
@@ -48,4 +48,4 @@ echo [Finalizing] Registering Menu...
 call "%~dp0install\install.bat" "%LOG_FILE%" "%~2"
 
 echo Setup Finished.
-echo --- SETUP LOG v3.8.4 END --- >> "%LOG_FILE%"
+echo --- SETUP LOG v3.9.0 END --- >> "%LOG_FILE%"
