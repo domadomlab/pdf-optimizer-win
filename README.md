@@ -1,54 +1,63 @@
-# PDF Optimizer Suite 🚀
+# PDF Optimizer Suite v3.8.2 🚀
 
 [![Release](https://img.shields.io/github/v/release/domadomlab/pdf-optimizer-win?style=for-the-badge&color=blue)](https://github.com/domadomlab/pdf-optimizer-win/releases/latest)
 [![Platform](https://img.shields.io/badge/Platform-Windows%2010%2F11%2FLTSC-win?style=for-the-badge)](https://www.microsoft.com/windows)
 [![License](https://img.shields.io/github/license/domadomlab/pdf-optimizer-win?style=for-the-badge)](LICENSE)
 
-**The ultimate right-click tool for reducing PDF size, ensuring privacy, and converting documents.**
-**Идеальный инструмент контекстного меню для сжатия PDF, защиты приватности и конвертации документов.**
+**The ultimate right-click tool for compressing PDFs and converting Word documents.**
+**Единственная утилита, которая делает всё через контекстное меню: сжимает PDF, конвертирует Word и защищает приватность.**
 
 ---
 
-## ✨ Features / Возможности
+## 📂 Supported Formats / Поддерживаемые Файлы
 
-### 📉 Smart Compression / Умное Сжатие
-Drastically reduce file size (up to 90%) while maintaining print-ready quality.
-*   **75 DPI (Eco):** For archives and drafts.
-*   **150 DPI (Email):** Perfect balance for sharing.
-*   **200 DPI (Print):** High quality for documents.
-*   **300 DPI (High):** Maximum fidelity.
+Just right-click any of these files to optimize:
+*   **📕 .PDF** (Portable Document Format) — Compress up to 90%.
+*   **📘 .DOCX** (Microsoft Word Modern) — Auto-convert to optimized PDF.
+*   **📘 .DOC** (Microsoft Word 97-2003) — Legacy support included.
 
-### 🔄 Word Integration / Поддержка Word
-Convert `.doc` and `.docx` directly to optimized PDF via the context menu. Requires MS Word installed.
-*Конвертация `.doc` и `.docx` в PDF прямо из меню (требуется установленный Word).*
+---
 
-### 🕵️ Camouflage & Privacy / Маскировка
-*   **Metadata Stripping:** Removes all Author, Creator, and GPS tags.
-*   **Camouflage Mode:** Injects fake metadata to make the PDF look like a scan from a physical device (HP, Canon, Xerox).
-*   *Очистка метаданных и маскировка под сканер.*
+## 🦄 Why is this Unique? / В чем уникальность?
 
-### 🛡️ Corporate Ready / Для Корпораций
-*   **Portable Core:** Embedded Python engine. No admin rights required for runtime.
-*   **Silent Operation:** No console windows, only system tray notifications.
-*   **LTSC Compatible:** Works on restricted systems (bypasses PowerShell blocks).
+Most tools are either online (unsafe) or require heavy installation (Adobe). We are different:
+
+1.  **💼 True Portable Core (Portable Python)**
+    *   The suite carries its own **Embedded Python 3.12** engine.
+    *   **No Admin Rights** needed to run.
+    *   **Works on Corporate LTSC** versions where PowerShell is blocked.
+
+2.  **🕵️ Camouflage Mode (Privacy 2.0)**
+    *   We don't just delete metadata; we **fake** it.
+    *   Files look like scans from generic office hardware (HP, Canon, Xerox).
+    *   *Ваши файлы выглядят как сканы с принтера, скрывая реальный источник.*
+
+3.  **⚡ Zero-UI Workflow**
+    *   No windows to open. No buttons to click.
+    *   Everything happens in the background via the Right-Click Menu.
+    *   Silent System Tray notifications.
+
+---
+
+## 📉 Compression Modes / Режимы Сжатия
+
+| Mode | DPI | Target Use Case | Size Reduction |
+| :--- | :--- | :--- | :--- |
+| **Eco** | 75 | Messengers, Archives | ~85-95% |
+| **Email** | 150 | Email Attachments (Standard) | ~60-80% |
+| **Print** | 200 | Office Printing | ~40-60% |
+| **High** | 300 | High-Quality Scans | ~10-25% |
 
 ---
 
 ## 🚀 Installation / Установка
 
-1.  Download the latest [Release](https://github.com/domadomlab/pdf-optimizer-win/releases).
-2.  Run `PDF_Optimizer_Suite_vX.X.X_Installer.exe`.
-3.  Right-click any PDF or Word file to see the magic.
+1.  Download **[PDF_Optimizer_Suite_v3.8.2_Installer.exe](https://github.com/domadomlab/pdf-optimizer-win/releases/latest)**.
+2.  Run the installer (it will extract the portable engine to `Program Files` or `AppData`).
+3.  Right-click any file to start using it!
+
+*Note for Word files: Microsoft Word (2010+) must be installed on the system for conversion to work.*
 
 ---
 
-## 🛠 Tech Stack / Технологии
-
-*   **Core:** Python 3.12 (Embedded)
-*   **Imaging:** ImageMagick 7 + Ghostscript
-*   **UI:** Native Windows Context Menu (Registry)
-*   **Automation:** VBScript + Win32 COM
-
----
-
-*(c) 2026 DomCorp. Licensed under MIT.*
+*(c) 2026 DomCorp. Open Source under MIT License.*
