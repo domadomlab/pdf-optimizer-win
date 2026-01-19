@@ -24,12 +24,12 @@ def main():
         print("Usage: register.py <python_exe> <script_path> <dummy> <lang_code>")
         return
 
-    # Use pythonw.exe for windowless execution from context menu
+    # Ensure we use pythonw.exe for windowless execution from context menu
     python_exe = sys.argv[1].replace("python.exe", "pythonw.exe")
     script_path = sys.argv[2]
     lang_code = sys.argv[4].upper()
 
-    print(f"--- Python Registry Setup v4.0.6 ---")
+    print(f"--- Python Registry Setup v4.1.1 ---")
     print(f"Python: {python_exe}")
     print(f"Script: {script_path}")
     print(f"Lang: {lang_code}")
@@ -52,7 +52,7 @@ def main():
             '300': 'PDF: High (300 dpi)'
         }
 
-    # Registry Roots to target
+    # Registry Roots to target (HKLM and HKCU)
     roots = [
         (winreg.HKEY_CURRENT_USER, r"Software\Classes\SystemFileAssociations\.pdf\shell"),
         (winreg.HKEY_CURRENT_USER, r"Software\Classes\.pdf\shell"),
@@ -76,7 +76,7 @@ def main():
                 continue
 
             for dpi, name in menu_names.items():
-                key_base = f"{root_path}\PDFOptimizer{dpi}"
+                key_base = f"{root_path}\\PDFOptimizer{dpi}"
                 
                 # 1. Menu Name
                 if register_key(root_hive, key_base, "", name):
@@ -88,14 +88,14 @@ def main():
                 # 3. Command
                 # Directly call pythonw.exe with quoted paths
                 cmd_val = f'"{python_exe}" "{script_path}" {dpi} "%1"'
-                register_key(root_hive, f"{key_base}\command", "", cmd_val)
+                register_key(root_hive, f"{key_base}\\command", "", cmd_val)
 
         except Exception as e:
             print(f"Skipping root {root_path}: {e}")
 
     print(f"Registry keys set: {success_count} (groups)")
 
-    # Notify Shell
+    # Notify Shell about changes
     try:
         ctypes.windll.shell32.SHChangeNotify(0x08000000, 0, 0, 0) # SHCNE_ASSOCCHANGED
         print("Shell Notified.")

@@ -1,8 +1,8 @@
 # PDF Optimizer Suite - Отчет о разработке (19 января 2026)
 
-## Статус проекта: v4.0.6 (Win) / v3.2.0 (Linux) - "Scientific Parity Update"
+## Статус проекта: v4.1.1 (Win) / v3.2.0 (Linux) - "Scientific Parity Update"
 
-### Ключевые достижения (v4.0.6 -> v4.0.6 / v3.2.0):
+### Ключевые достижения (v4.1.1 -> v4.1.1 / v3.2.0):
 
 1.  **Интеллектуальный стандарт 150 DPI:**
     *   Технология **Trellis-Quantization Mimic** (Lanczos + Resize 95% + Unsharp) перенесена из экспериментального режима "Extreme" в основной рабочий режим **Email (150 DPI)**.
@@ -19,7 +19,7 @@
 
 *   **150 DPI Logic:** `convert -density 150 -filter Lanczos -distort Resize 95% -unsharp 0x0.5 -sampling-factor 4:2:0 -quality 70`.
 *   **Package Integrity:** Всегда проверять текстовые описания в `control` (Debian) и `installer.nsi` (Windows) при смене версий. Описание должно быть зеркалом технических полей.
-*   **Version Consistency:** Актуальные версии на текущий момент: **Windows v4.0.6**, **Linux v3.2.0**.
+*   **Version Consistency:** Актуальные версии на текущий момент: **Windows v4.1.1**, **Linux v3.2.0**.
 
 ---
 *Все ошибки в документации исправлены. Проект зафиксирован в стабильном и научно-обоснованном состоянии.*

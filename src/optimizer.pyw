@@ -7,10 +7,11 @@ import random
 import tempfile
 import traceback
 from datetime import datetime
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # --- CONFIGURATION & LOGGING ---
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-# Add embedded python paths to sys.path
+# Add embedded python paths to sys.path for standard library resolution
 sys.path.append(os.path.join(BASE_DIR, "resources", "python"))
 sys.path.append(BASE_DIR)
 
@@ -32,7 +33,7 @@ def log(message):
         with open(LOG_FILE, "a", encoding="utf-8") as f:
             f.write(f"[{timestamp}] {message}\n")
     except:
-        # Fallback to temp directory if primary log is unwritable
+        # Fallback to temp directory
         try:
             temp_log = os.path.join(tempfile.gettempdir(), 'pdf_optimizer_fallback.log')
             with open(temp_log, "a", encoding="utf-8") as f:
@@ -43,7 +44,6 @@ def log_error(e):
     log(f"CRITICAL ERROR: {str(e)}")
     log(traceback.format_exc())
 
-# --- HELPER FUNCTIONS ---
 def format_size(size_bytes):
     for unit in ['B', 'KB', 'MB', 'GB']:
         if size_bytes < 1024.0: return f"{size_bytes:.2f} {unit}"
@@ -111,13 +111,30 @@ def get_page_count(magick_exe, file_path):
     except: pass
     return 1
 
+def process_single_page(page_idx, file_path, read_dpi, quality, im_limits, magick_exe, tmpdir, metadata_args):
+    """Worker function for parallel execution"""
+    page_out = os.path.join(tmpdir, f"page_{page_idx:04d}.pdf")
+    cmd = [magick_exe] + im_limits + [
+           "-density", read_dpi, f"{file_path}[{page_idx}]", 
+           "-alpha", "remove", "-alpha", "off", 
+           "-filter", "Lanczos", "-distort", "Resize", "95%", 
+           "-unsharp", "0x0.5",
+           "-sampling-factor", "4:2:0", 
+           "-compress", "jpeg", 
+           "-quality", quality] + metadata_args + [page_out]
+    
+    creation_flags = 0x08000000 if sys.platform == 'win32' else 0
+    res = subprocess.run(cmd, capture_output=True, text=True, creationflags=creation_flags)
+    if res.returncode == 0 and os.path.exists(page_out):
+        return page_out
+    else:
+        raise Exception(f"Page {page_idx} failed: {res.stderr}")
+
 def optimize_pdf(file_path, dpi):
-    log(f"--- SESSION START v4.0.6 (Universal Trellis): {file_path} ---")
+    log(f"--- SESSION START v4.1.1 (Turbo Pro): {file_path} ---")
     
     try:
-        if not os.path.exists(file_path):
-            log(f"ERROR: File not found: {file_path}")
-            return "Error: File missing."
+        if not os.path.exists(file_path): return "Error: File missing."
         input_size = os.path.getsize(file_path)
     except Exception as e:
         log_error(e)
@@ -129,83 +146,58 @@ def optimize_pdf(file_path, dpi):
     # --- WORD CONVERSION ---
     ext = os.path.splitext(file_path)[1].lower()
     if ext in ['.doc', '.docx']:
-        log("Converting Word document...")
         converter_script = os.path.join(BASE_DIR, "src", "docx2pdf.vbs")
         temp_pdf_from_word = os.path.join(os.path.dirname(file_path), f"~temp_{os.path.basename(file_path)}.pdf")
         try:
             conv_cmd = ["cscript", "//NoLogo", converter_script, file_path, temp_pdf_from_word]
             creation_flags = 0x08000000 if sys.platform == 'win32' else 0
             subprocess.run(conv_cmd, capture_output=True, creationflags=creation_flags)
-            if os.path.exists(temp_pdf_from_word):
-                file_path = temp_pdf_from_word
-            else:
-                log("Word conversion failed.")
-                return "Error: MS Word conversion failed."
+            if os.path.exists(temp_pdf_from_word): file_path = temp_pdf_from_word
+            else: return "Error: MS Word conversion failed."
         except Exception as e:
             log_error(e)
             return f"Error converting Word: {e}"
 
-    # --- TOOLS CHECK ---
     gs_exe = find_ghostscript()
-    if gs_exe:
-        os.environ["MAGICK_GHOSTSCRIPT_EXE"] = gs_exe
-        os.environ["PATH"] += os.pathsep + os.path.dirname(gs_exe)
-    else:
-        log("ERROR: Ghostscript not found.")
-        return "Error: Ghostscript not found."
-
     magick_exe = find_magick()
-    if not magick_exe:
-        log("ERROR: ImageMagick not found.")
-        return "Error: ImageMagick not found."
+    if not gs_exe or not magick_exe: return "Error: External tools missing."
 
-    # --- PREPARE ---
     page_count = get_page_count(magick_exe, file_path)
     output_path = f"{os.path.splitext(original_file_path)[0]}_{dpi}dpi.pdf"
     
-    # Resource limits for IM
-    im_limits = ["-limit", "memory", "2GiB", "-limit", "map", "4GiB", "-limit", "area", "1GiB"]
+    # Adaptive limits: less memory per thread to avoid system lock
+    im_limits = ["-limit", "memory", "512MiB", "-limit", "map", "1GiB", "-limit", "area", "256MiB"]
+    quality = "40" if str(dpi) == "30" else "70"
+    read_dpi = "150" if str(dpi) == "30" else str(dpi)
     
-    quality = "70"
-    read_dpi = str(dpi)
-    if str(dpi) == "30":
-        quality = "40"
-        read_dpi = "150"
+    metadata_args = get_fake_metadata_args() # Chosen ONCE per document
 
-    creation_flags = 0x08000000 if sys.platform == 'win32' else 0
     success = False
-
     try:
         if page_count > 1:
-            log(f"Heavy Duty Mode: {page_count} pages.")
+            max_workers = os.cpu_count() or 4
+            log(f"Parallelizing {page_count} pages across {max_workers} threads.")
+            
             with tempfile.TemporaryDirectory() as tmpdir:
-                processed_pages = []
-                for i in range(page_count):
-                    page_out = os.path.join(tmpdir, f"page_{i:04d}.pdf")
-                    # Scientific Pipeline
-                    cmd = [magick_exe] + im_limits + [
-                           "-density", read_dpi, f"{file_path}[{i}]", 
-                           "-alpha", "remove", "-alpha", "off", 
-                           "-filter", "Lanczos", "-distort", "Resize", "95%", 
-                           "-unsharp", "0x0.5",
-                           "-sampling-factor", "4:2:0", 
-                           "-compress", "jpeg", 
-                           "-quality", quality] + get_fake_metadata_args() + [page_out]
-                    
-                    res = subprocess.run(cmd, capture_output=True, creationflags=creation_flags)
-                    if res.returncode == 0 and os.path.exists(page_out):
-                        processed_pages.append(page_out)
-                    else:
-                        log(f"Page {i} failed: {res.stderr}")
-                        return f"Error on page {i}"
+                processed_pages_map = {}
+                with ThreadPoolExecutor(max_workers=max_workers) as executor:
+                    futures = {executor.submit(process_single_page, i, file_path, read_dpi, quality, im_limits, magick_exe, tmpdir, metadata_args): i for i in range(page_count)}
+                    for future in as_completed(futures):
+                        idx = futures[future]
+                        try:
+                            page_path = future.result()
+                            processed_pages_map[idx] = page_path
+                        except Exception as e:
+                            log(f"Worker Error on page {idx}: {e}")
+                            return f"Worker Error: {e}"
 
-                # Merge back
-                log("Merging pages...")
-                merge_cmd = [gs_exe, "-dNOPAUSE", "-sDEVICE=pdfwrite", f"-sOUTPUTFILE={output_path}", "-dBATCH"] + processed_pages
-                res_merge = subprocess.run(merge_cmd, capture_output=True, creationflags=creation_flags)
+                sorted_pages = [processed_pages_map[i] for i in range(page_count)]
+                log("Merging pages using Ghostscript...")
+                merge_cmd = [gs_exe, "-dNOPAUSE", "-sDEVICE=pdfwrite", f"-sOUTPUTFILE={output_path}", "-dBATCH"] + sorted_pages
+                creation_flags = 0x08000000 if sys.platform == 'win32' else 0
+                res_merge = subprocess.run(merge_cmd, capture_output=True, text=True, creationflags=creation_flags)
                 if res_merge.returncode == 0: success = True
         else:
-            log("Single page mode.")
             cmd = [magick_exe] + im_limits + [
                    "-density", read_dpi, file_path, 
                    "-alpha", "remove", "-alpha", "off", 
@@ -213,8 +205,8 @@ def optimize_pdf(file_path, dpi):
                    "-unsharp", "0x0.5",
                    "-sampling-factor", "4:2:0", 
                    "-compress", "jpeg", 
-                   "-quality", quality] + get_fake_metadata_args() + [output_path]
-            
+                   "-quality", quality] + metadata_args + [output_path]
+            creation_flags = 0x08000000 if sys.platform == 'win32' else 0
             res = subprocess.run(cmd, capture_output=True, creationflags=creation_flags)
             if res.returncode == 0: success = True
 
@@ -222,11 +214,9 @@ def optimize_pdf(file_path, dpi):
             output_size = os.path.getsize(output_path)
             diff = input_size - output_size
             pct = (diff / input_size) * 100 if input_size > 0 else 0
-            log(f"SUCCESS: {format_size(output_size)}")
+            log(f"FINAL SUCCESS: {format_size(output_size)}")
             return f"Done! Reduced by {pct:.0f}% ({format_size(output_size)})"
-        else:
-            log("FAILED: Success flag false or output missing.")
-            return "Optimization failed."
+        else: return "Optimization failed."
 
     except Exception as e:
         log_error(e)
@@ -241,8 +231,7 @@ def show_notification(title, message):
     safe_title = title.replace('"', "'" )
     ps_script = f"Add-Type -AssemblyName System.Windows.Forms; $n = New-Object System.Windows.Forms.NotifyIcon; $n.Icon = [System.Drawing.SystemIcons]::Information; $n.Visible = $True; $n.BalloonTipTitle = '{safe_title}'; $n.BalloonTipText = '{safe_msg}'; $n.ShowBalloonTip(3000); Start-Sleep -Seconds 4; $n.Dispose()"
     if sys.platform == 'win32':
-        try:
-            subprocess.Popen(["powershell", "-Command", ps_script], creationflags=0x08000000)
+        try: subprocess.Popen(["powershell", "-Command", ps_script], creationflags=0x08000000)
         except: pass
 
 def main():
@@ -250,8 +239,7 @@ def main():
     try:
         res = optimize_pdf(sys.argv[2], sys.argv[1])
         show_notification("PDF Optimizer Suite", res)
-    except Exception as e:
-        log_error(e)
+    except Exception as e: log_error(e)
 
 if __name__ == "__main__":
     main()

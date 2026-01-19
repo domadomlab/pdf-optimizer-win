@@ -1,4 +1,4 @@
-# PDF Optimizer Suite 🚀 v4.0.6
+# PDF Optimizer Suite 🚀 v4.1.1
 
 **The ultimate right-click tool for compressing PDFs and converting Word documents.**
 
