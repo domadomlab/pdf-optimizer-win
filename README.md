@@ -1,4 +1,4 @@
-# PDF Optimizer Suite 🚀 v3.9.5
+# PDF Optimizer Suite 🚀 v4.0.6
 
 [🇷🇺 Русский](README.md) | [🇺🇸 English](README.en.md)
 
@@ -43,8 +43,8 @@ Embedded Python 3.12 core. Runs on Windows LTSC and restricted Linux environment
 
 ## 🛠 Installation / Установка
 
-### Windows (v3.9.5)
-1. Download **[PDF_Optimizer_Suite_v3.9.5_Installer.exe](https://github.com/domadomlab/pdf-optimizer-win/releases/latest)**.
+### Windows (v4.0.6)
+1. Download **[PDF_Optimizer_Suite_v4.0.6_Installer.exe](https://github.com/domadomlab/pdf-optimizer-win/releases/latest)**.
 2. Run the installer and right-click any file.
 
 ### Linux (v3.1.3)

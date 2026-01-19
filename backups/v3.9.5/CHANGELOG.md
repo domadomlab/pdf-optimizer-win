@@ -1,8 +1,3 @@
-## [4.0.0] - 2026-01-19
-### Added
-- **Heavy Duty Processing**: Implemented page-by-page optimization architecture. Multi-page documents are now split into individual pages, processed with scientific filters, and merged back. This eliminates "out of memory" errors on large files at 300 DPI.
-- **Stability**: Standardized on constant memory usage regardless of document length.
-
 # Changelog - PDF Optimizer Suite
 
 ## [3.9.5] - 2026-01-19

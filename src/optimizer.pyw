@@ -4,9 +4,16 @@ import subprocess
 import shutil
 import ctypes
 import random
+import tempfile
+import traceback
 from datetime import datetime
 
+# --- CONFIGURATION & LOGGING ---
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# Add embedded python paths to sys.path
+sys.path.append(os.path.join(BASE_DIR, "resources", "python"))
+sys.path.append(BASE_DIR)
+
 CONFIG_FILE = os.path.join(BASE_DIR, "log_config.txt")
 LOG_DIR = BASE_DIR
 
@@ -19,74 +26,63 @@ if os.path.exists(CONFIG_FILE):
 
 LOG_FILE = os.path.join(LOG_DIR, 'pdf_optimizer_debug.log')
 
-# --- Fake Scanners Database ---
-FAKE_SCANNERS = [
-    # HP
-    {"Producer": "HP LaserJet MFP M426fdw", "Creator": "HP Scan", "Author": "Scanner"},
-    {"Producer": "HP Color LaserJet Pro MFP M283fdw", "Creator": "HP Smart", "Author": "Administrator"},
-    # Canon
-    {"Producer": "Canon iR-ADV C5535", "Creator": "Canon PDF Platform", "Author": ""},
-    {"Producer": "Canon MF Scan Utility", "Creator": "Canon MF643Cdw", "Author": "User"},
-    # Xerox
-    {"Producer": "Xerox WorkCentre 7845", "Creator": "Xerox WorkCentre", "Author": "Xerox"},
-    {"Producer": "Xerox VersaLink C405", "Creator": "Xerox MFP", "Author": "Scan"},
-    # Kyocera
-    {"Producer": "Kyocera ECOSYS M2540dn", "Creator": "KM-4050 Scanner", "Author": "Scanner"},
-    # Brother
-    {"Producer": "Brother MFC-L2710DW", "Creator": "Brother iPrint&Scan", "Author": ""},
-    # Epson
-    {"Producer": "Epson Scan 2", "Creator": "EPSON Scan", "Author": ""},
-]
-
-def format_size(size_bytes):
-    """Converts bytes to human readable string."""
-    for unit in ['B', 'KB', 'MB', 'GB']:
-        if size_bytes < 1024.0:
-            return f"{size_bytes:.2f} {unit}"
-        size_bytes /= 1024.0
-    return f"{size_bytes:.2f} TB"
-
 def log(message):
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     try:
         with open(LOG_FILE, "a", encoding="utf-8") as f:
             f.write(f"[{timestamp}] {message}\n")
-    except: pass
+    except:
+        # Fallback to temp directory if primary log is unwritable
+        try:
+            temp_log = os.path.join(tempfile.gettempdir(), 'pdf_optimizer_fallback.log')
+            with open(temp_log, "a", encoding="utf-8") as f:
+                f.write(f"[{timestamp}] {message}\n")
+        except: pass
+
+def log_error(e):
+    log(f"CRITICAL ERROR: {str(e)}")
+    log(traceback.format_exc())
+
+# --- HELPER FUNCTIONS ---
+def format_size(size_bytes):
+    for unit in ['B', 'KB', 'MB', 'GB']:
+        if size_bytes < 1024.0: return f"{size_bytes:.2f} {unit}"
+        size_bytes /= 1024.0
+    return f"{size_bytes:.2f} TB"
+
+# --- Fake Scanners Database ---
+FAKE_SCANNERS = [
+    {"Producer": "HP LaserJet MFP M426fdw", "Creator": "HP Scan", "Author": "Scanner"},
+    {"Producer": "HP Color LaserJet Pro MFP M283fdw", "Creator": "HP Smart", "Author": "Administrator"},
+    {"Producer": "Canon iR-ADV C5535", "Creator": "Canon PDF Platform", "Author": ""},
+    {"Producer": "Canon MF Scan Utility", "Creator": "Canon MF643Cdw", "Author": "User"},
+    {"Producer": "Xerox WorkCentre 7845", "Creator": "Xerox WorkCentre", "Author": "Xerox"},
+    {"Producer": "Xerox VersaLink C405", "Creator": "Xerox MFP", "Author": "Scan"},
+    {"Producer": "Kyocera ECOSYS M2540dn", "Creator": "KM-4050 Scanner", "Author": "Scanner"},
+    {"Producer": "Brother MFC-L2710DW", "Creator": "Brother iPrint&Scan", "Author": ""},
+    {"Producer": "Epson Scan 2", "Creator": "EPSON Scan", "Author": ""},
+]
 
 def get_fake_metadata_args():
-    """Generates random metadata to impersonate a physical scanner."""
     try:
         profile = random.choice(FAKE_SCANNERS)
         args = []
-        
-        # Using -define pdf:Property=Value is more reliable for PDF output in ImageMagick
         if profile["Producer"]: args.extend(["-define", f"pdf:Producer={profile['Producer']}"])
         if profile["Creator"]: args.extend(["-define", f"pdf:Creator={profile['Creator']}"])
-        
-        # Author is often empty or generic
         author = profile["Author"] if profile["Author"] else " "
         args.extend(["-define", f"pdf:Author={author}"])
-        
-        # Title is usually generic for scans
         titles = ["Scanned Document", "Scan", "Doc", "Document", "Scan_2026", "CCF_0001"]
         args.extend(["-define", f"pdf:Title={random.choice(titles)}"])
-        
-        log(f"Applying Fake Profile: {profile['Producer']}")
         return args
-    except Exception as e:
-        log(f"Metadata Error: {e}")
-        return []
+    except: return []
 
 def find_ghostscript():
-    # 1. Проверка в PATH
     gs = shutil.which("gswin64c") or shutil.which("gswin32c")
     if gs: return gs
-
-    # 2. Поиск по стандартным путям (агрессивный)
     pf = os.environ.get("ProgramFiles", "C:\\Program Files")
     gs_base = os.path.join(pf, "gs")
     if os.path.exists(gs_base):
-        for folder in reversed(os.listdir(gs_base)): # Ищем последнюю версию
+        for folder in reversed(os.listdir(gs_base)):
             for sub in ["bin", "lib"]:
                 for exe in ["gswin64c.exe", "gswin32c.exe"]:
                     target = os.path.join(gs_base, folder, sub, exe)
@@ -96,175 +92,166 @@ def find_ghostscript():
 def find_magick():
     magick = shutil.which("magick")
     if magick: return magick
-    
     pf = os.environ.get("ProgramFiles", "C:\\Program Files")
-    for folder in os.listdir(pf):
-        if "imagemagick" in folder.lower():
-            target = os.path.join(pf, folder, "magick.exe")
-            if os.path.exists(target): return target
+    if os.path.exists(pf):
+        for folder in os.listdir(pf):
+            if "imagemagick" in folder.lower():
+                target = os.path.join(pf, folder, "magick.exe")
+                if os.path.exists(target): return target
     return None
 
-def optimize_pdf(file_path, dpi):
-    log(f"--- SESSION START v3.9.5 (Scientific Universal): {file_path} ---")
-    
-    # Analyze Input File
+def get_page_count(magick_exe, file_path):
     try:
+        cmd = [magick_exe, "identify", "-format", "%n\n", file_path]
+        creation_flags = 0x08000000 if sys.platform == 'win32' else 0
+        result = subprocess.run(cmd, capture_output=True, text=True, creationflags=creation_flags)
+        if result.returncode == 0:
+            lines = result.stdout.strip().split('\n')
+            if lines: return int(lines[0])
+    except: pass
+    return 1
+
+def optimize_pdf(file_path, dpi):
+    log(f"--- SESSION START v4.0.6 (Universal Trellis): {file_path} ---")
+    
+    try:
+        if not os.path.exists(file_path):
+            log(f"ERROR: File not found: {file_path}")
+            return "Error: File missing."
         input_size = os.path.getsize(file_path)
-        log(f"INPUT FILE: Size {format_size(input_size)}")
     except Exception as e:
-        log(f"Input Error: {e}")
+        log_error(e)
         return f"Error reading input: {e}"
 
-    original_file_path = file_path # Keep original path for naming output
+    original_file_path = file_path
+    temp_pdf_from_word = None
 
-    # --- WORD CONVERSION START ---
+    # --- WORD CONVERSION ---
     ext = os.path.splitext(file_path)[1].lower()
-    is_word_doc = ext in ['.doc', '.docx']
-    temp_pdf = None
-
-    if is_word_doc:
-        log("Detected Word document. Converting to PDF...")
+    if ext in ['.doc', '.docx']:
+        log("Converting Word document...")
         converter_script = os.path.join(BASE_DIR, "src", "docx2pdf.vbs")
-        temp_pdf = os.path.join(os.path.dirname(file_path), f"~temp_{os.path.basename(file_path)}.pdf")
-        
+        temp_pdf_from_word = os.path.join(os.path.dirname(file_path), f"~temp_{os.path.basename(file_path)}.pdf")
         try:
-            # Run VBScript to convert using MS Word
-            conv_cmd = ["cscript", "//NoLogo", converter_script, file_path, temp_pdf]
+            conv_cmd = ["cscript", "//NoLogo", converter_script, file_path, temp_pdf_from_word]
             creation_flags = 0x08000000 if sys.platform == 'win32' else 0
-            conv_res = subprocess.run(conv_cmd, capture_output=True, creationflags=creation_flags)
-            
-            if conv_res.returncode != 0 or not os.path.exists(temp_pdf):
-                log(f"Word Conversion Failed. Code: {conv_res.returncode}")
+            subprocess.run(conv_cmd, capture_output=True, creationflags=creation_flags)
+            if os.path.exists(temp_pdf_from_word):
+                file_path = temp_pdf_from_word
+            else:
+                log("Word conversion failed.")
                 return "Error: MS Word conversion failed."
-            
-            file_path = temp_pdf
-            log(f"Conversion successful. Temp PDF: {file_path}")
-            
         except Exception as e:
-            log(f"Conversion Exception: {e}")
+            log_error(e)
             return f"Error converting Word: {e}"
-    # --- WORD CONVERSION END ---
 
+    # --- TOOLS CHECK ---
     gs_exe = find_ghostscript()
     if gs_exe:
-        log(f"Ghostscript located: {gs_exe}")
         os.environ["MAGICK_GHOSTSCRIPT_EXE"] = gs_exe
         os.environ["PATH"] += os.pathsep + os.path.dirname(gs_exe)
     else:
-        log("CRITICAL: Ghostscript not found!")
-        return "Error: Ghostscript not found. Please reinstall."
+        log("ERROR: Ghostscript not found.")
+        return "Error: Ghostscript not found."
 
     magick_exe = find_magick()
     if not magick_exe:
-        log("CRITICAL: ImageMagick not found!")
+        log("ERROR: ImageMagick not found.")
         return "Error: ImageMagick not found."
 
+    # --- PREPARE ---
+    page_count = get_page_count(magick_exe, file_path)
     output_path = f"{os.path.splitext(original_file_path)[0]}_{dpi}dpi.pdf"
     
-    # --- UNIVERSAL SCIENTIFIC PIPELINE (Trellis Mimic) ---
-    im_limits = ["-limit", "memory", "1GiB", "-limit", "map", "2GiB"]
+    # Resource limits for IM
+    im_limits = ["-limit", "memory", "2GiB", "-limit", "map", "4GiB", "-limit", "area", "1GiB"]
     
-    # Defaults
     quality = "70"
     read_dpi = str(dpi)
-    
-    # Special adjustment for Extreme mode
     if str(dpi) == "30":
         quality = "40"
-        read_dpi = "150" # Read at 150, compress heavily
+        read_dpi = "150"
 
-    cmd = [magick_exe] + im_limits + [
-           "-density", read_dpi, "-units", "PixelsPerInch", file_path, 
-           "-alpha", "remove", "-alpha", "off", 
-           "-filter", "Lanczos", "-distort", "Resize", "95%", 
-           "-unsharp", "0x0.5",
-           "-sampling-factor", "4:2:0", 
-           "-compress", "jpeg", 
-           "-quality", quality]
-           
-    # 2. Strip ALL existing metadata (Privacy First)
-    cmd.extend(["+profile", "*"])
-    
-    # 3. Inject FAKE metadata (Camouflage)
-    cmd.extend(get_fake_metadata_args())
-    
-    # 4. Output
-    cmd.append(output_path)
+    creation_flags = 0x08000000 if sys.platform == 'win32' else 0
+    success = False
 
     try:
-        log(f"Running: {' '.join(cmd)}")
-        
-        creation_flags = 0
-        if sys.platform == 'win32':
-            creation_flags = 0x08000000  # CREATE_NO_WINDOW
-            
-        result = subprocess.run(
-            cmd, 
-            capture_output=True, 
-            text=True, 
-            creationflags=creation_flags,
-            stdin=subprocess.DEVNULL
-        )
-        
-        if result.returncode == 0:
-            if os.path.exists(output_path):
-                output_size = os.path.getsize(output_path)
-                diff = input_size - output_size
-                percent = (diff / input_size) * 100 if input_size > 0 else 0
-                
-                log(f"OUTPUT FILE: Size {format_size(output_size)}")
-                log(f"STATS: Reduced by {format_size(diff)} ({percent:.1f}%)")
-                log("SUCCESS")
-                
-                return f"Done! Reduced by {percent:.0f}% ({format_size(output_size)})"
-            else:
-                log("Error: Output file not created despite 0 exit code.")
-                return "Error: Output file missing."
+        if page_count > 1:
+            log(f"Heavy Duty Mode: {page_count} pages.")
+            with tempfile.TemporaryDirectory() as tmpdir:
+                processed_pages = []
+                for i in range(page_count):
+                    page_out = os.path.join(tmpdir, f"page_{i:04d}.pdf")
+                    # Scientific Pipeline
+                    cmd = [magick_exe] + im_limits + [
+                           "-density", read_dpi, f"{file_path}[{i}]", 
+                           "-alpha", "remove", "-alpha", "off", 
+                           "-filter", "Lanczos", "-distort", "Resize", "95%", 
+                           "-unsharp", "0x0.5",
+                           "-sampling-factor", "4:2:0", 
+                           "-compress", "jpeg", 
+                           "-quality", quality] + get_fake_metadata_args() + [page_out]
+                    
+                    res = subprocess.run(cmd, capture_output=True, creationflags=creation_flags)
+                    if res.returncode == 0 and os.path.exists(page_out):
+                        processed_pages.append(page_out)
+                    else:
+                        log(f"Page {i} failed: {res.stderr}")
+                        return f"Error on page {i}"
+
+                # Merge back
+                log("Merging pages...")
+                merge_cmd = [gs_exe, "-dNOPAUSE", "-sDEVICE=pdfwrite", f"-sOUTPUTFILE={output_path}", "-dBATCH"] + processed_pages
+                res_merge = subprocess.run(merge_cmd, capture_output=True, creationflags=creation_flags)
+                if res_merge.returncode == 0: success = True
         else:
-            log(f"MAGICK ERROR: {result.stderr}")
-            return f"Error: {result.stderr}"
+            log("Single page mode.")
+            cmd = [magick_exe] + im_limits + [
+                   "-density", read_dpi, file_path, 
+                   "-alpha", "remove", "-alpha", "off", 
+                   "-filter", "Lanczos", "-distort", "Resize", "95%", 
+                   "-unsharp", "0x0.5",
+                   "-sampling-factor", "4:2:0", 
+                   "-compress", "jpeg", 
+                   "-quality", quality] + get_fake_metadata_args() + [output_path]
             
+            res = subprocess.run(cmd, capture_output=True, creationflags=creation_flags)
+            if res.returncode == 0: success = True
+
+        if success and os.path.exists(output_path):
+            output_size = os.path.getsize(output_path)
+            diff = input_size - output_size
+            pct = (diff / input_size) * 100 if input_size > 0 else 0
+            log(f"SUCCESS: {format_size(output_size)}")
+            return f"Done! Reduced by {pct:.0f}% ({format_size(output_size)})"
+        else:
+            log("FAILED: Success flag false or output missing.")
+            return "Optimization failed."
+
     except Exception as e:
-        log(f"EXCEPTION: {str(e)}")
+        log_error(e)
         return str(e)
     finally:
-        if temp_pdf and os.path.exists(temp_pdf):
-            try: 
-                os.remove(temp_pdf)
-                log(f"Cleanup: Removed temporary file {temp_pdf}")
-            except Exception as e: 
-                log(f"Cleanup Error: {e}")
+        if temp_pdf_from_word and os.path.exists(temp_pdf_from_word):
+            try: os.remove(temp_pdf_from_word)
+            except: pass
 
 def show_notification(title, message):
     safe_msg = message.replace('"', "'" ).replace("\n", " ")
     safe_title = title.replace('"', "'" )
-    
-    ps_script = f"""
-    Add-Type -AssemblyName System.Windows.Forms
-    $notify = New-Object System.Windows.Forms.NotifyIcon
-    $notify.Icon = [System.Drawing.SystemIcons]::Information
-    $notify.Visible = $True
-    $notify.BalloonTipTitle = '{safe_title}'
-    $notify.BalloonTipText = '{safe_msg}'
-    $notify.ShowBalloonTip(3000)
-    Start-Sleep -Seconds 4
-    $notify.Dispose()
-    """
-    try:
-        if sys.platform == 'win32':
-            subprocess.Popen(
-                ["powershell", "-Command", ps_script],
-                creationflags=0x08000000
-            )
-        else:
-            print(f"NOTIFICATION [{title}]: {message}")
-    except Exception as e:
-        log(f"Notification Error: {e}")
+    ps_script = f"Add-Type -AssemblyName System.Windows.Forms; $n = New-Object System.Windows.Forms.NotifyIcon; $n.Icon = [System.Drawing.SystemIcons]::Information; $n.Visible = $True; $n.BalloonTipTitle = '{safe_title}'; $n.BalloonTipText = '{safe_msg}'; $n.ShowBalloonTip(3000); Start-Sleep -Seconds 4; $n.Dispose()"
+    if sys.platform == 'win32':
+        try:
+            subprocess.Popen(["powershell", "-Command", ps_script], creationflags=0x08000000)
+        except: pass
 
 def main():
     if len(sys.argv) < 3: return
-    res = optimize_pdf(sys.argv[2], sys.argv[1])
-    show_notification("PDF Optimizer Suite", res)
+    try:
+        res = optimize_pdf(sys.argv[2], sys.argv[1])
+        show_notification("PDF Optimizer Suite", res)
+    except Exception as e:
+        log_error(e)
 
 if __name__ == "__main__":
     main()
