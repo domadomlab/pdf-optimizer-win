@@ -1,31 +1,29 @@
-# PDF Optimizer Suite 🚀 v3.9.2
+# PDF Optimizer Suite 🚀 v3.9.3
 
 [🇷🇺 Русский](README.md) | [🇺🇸 English](README.en.md)
 
 ---
 
 **The ultimate right-click tool for compressing PDFs and converting Word documents.**
-**Идеальный инструмент контекстного меню для сжатия PDF и конвертации документов Word.**
+**Единственная утилита, которая делает всё через контекстное меню: сжимает PDF, конвертирует Word и защищает приватность.**
 
 ---
 
 ## ✨ Features / Возможности
 
-### 📈 Smart Compression / Умное Сжатие
-Drastically reduce file size (up to 90%) while maintaining print-ready quality.
-*Продвинутое сжатие PDF до 90% без потери читаемости.*
+### 🔬 Universal Scientific Engine (New in v3.9.3)
+**Trellis-Quantization Mimic** is now applied to ALL modes. Uses **Lanczos filtering** and **adaptive 95% resizing** to remove digital noise and sharpen text, achieving record-breaking size reduction (up to 90%) without losing readability.
+*Научный подход к сжатию во всех режимах: фильтрация Lanczos и адаптивный ресайз для идеальной четкости и минимального веса.*
 
-### 🔄 Word Integration / Поддержка Word
-Convert `.doc` and `.docx` directly to optimized PDF via context menu (MS Word required).
-*Автоматическая конвертация Word в PDF прямо из проводника.*
-
-### 🕵️ Camouflage & Privacy / Маскировка
-Strips real metadata and injects fake scanner signatures (HP, Canon, Xerox).
+### 🕵️ Camouflage Mode (Privacy 2.0)
+Strips real metadata and injects random scanner signatures (HP, Canon, Xerox).
 *Очистка метаданных и имитация аппаратного скана для вашей приватности.*
 
-### 🛡️ Corporate Ready / Для Корпораций
+### 🛡️ Corporate Ready
 Embedded Python 3.12 core. Runs on Windows LTSC without Admin rights or PowerShell dependency.
 *Портативный движок Python. Работает на заблокированных ПК и Windows LTSC.*
+
+---
 
 ## 📂 Supported Formats / Поддерживаемые Файлы
 
@@ -37,21 +35,20 @@ Just right-click any of these files to optimize:
 
 ## 📉 Compression Modes / Режимы Сжатия
 
-| Mode | DPI | Effect | Target Use Case |
+| Mode | DPI | Size Reduction | Target Use Case |
 | :--- | :--- | :--- | :--- |
-| **Extreme** | 30* | **-80-90%** | Critical size, low bandwidth |
-| **Eco** | 75 | **-70-80%** | Messengers, Archives |
-| **Email** | 150 | **-50-70%** | Official sharing (Standard) |
-| **Print** | 200 | **-30-50%** | Office printing |
-| **High** | 300 | **-10-20%** | High-quality archiving |
+| **Extreme** | 30 | **-85-90%** | Satellite / Low Bandwidth |
+| **Eco** | 75 | **-75-85%** | Messengers, Archives |
+| **Email** | 150 | **-60-75%** | Official sharing (Standard) |
+| **Print** | 200 | **-40-60%** | Office printing |
+| **High** | 300 | **-20-35%** | High-quality archiving |
 
-*\*Extreme mode uses scientific Trellis-Quantization Mimic technology.*
 ---
 
 ## 🛠 Installation / Установка
 
-1.  Download **[PDF_Optimizer_Suite_v3.9.2_Installer.exe](https://github.com/domadomlab/pdf-optimizer-win/releases/latest)**.
-2.  Run the installer (extracts portable engine).
+1.  Download **[PDF_Optimizer_Suite_v3.9.3_Installer.exe](https://github.com/domadomlab/pdf-optimizer-win/releases/latest)**.
+2.  Run the installer.
 3.  Right-click any PDF or Word file to start.
 
 ---
