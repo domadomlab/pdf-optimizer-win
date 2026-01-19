@@ -1,4 +1,4 @@
-# PDF Optimizer Suite v3.8.2 🚀
+# PDF Optimizer Suite v3.8.4 🚀
 
 [![Release](https://img.shields.io/github/v/release/domadomlab/pdf-optimizer-win?style=for-the-badge&color=blue)](https://github.com/domadomlab/pdf-optimizer-win/releases/latest)
 [![Platform](https://img.shields.io/badge/Platform-Windows%2010%2F11%2FLTSC-win?style=for-the-badge)](https://www.microsoft.com/windows)
@@ -52,7 +52,7 @@ Most tools are either online (unsafe) or require heavy installation (Adobe). We 
 
 ## 🚀 Installation / Установка
 
-1.  Download **[PDF_Optimizer_Suite_v3.8.2_Installer.exe](https://github.com/domadomlab/pdf-optimizer-win/releases/latest)**.
+1.  Download **[PDF_Optimizer_Suite_v3.8.4_Installer.exe](https://github.com/domadomlab/pdf-optimizer-win/releases/latest)**.
 2.  Run the installer (it will extract the portable engine to `Program Files` or `AppData`).
 3.  Right-click any file to start using it!
 

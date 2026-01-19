@@ -105,7 +105,7 @@ def find_magick():
     return None
 
 def optimize_pdf(file_path, dpi):
-    log(f"--- SESSION START v3.8.2: {file_path} ---")
+    log(f"--- SESSION START v3.8.4: {file_path} ---")
     
     # Analyze Input File
     try:
