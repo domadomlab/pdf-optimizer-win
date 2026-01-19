@@ -1,14 +1,14 @@
 @echo off
 setlocal enabledelayedexpansion
-title PDF Optimizer Suite v4.1.1 - Portable Setup
+title PDF Optimizer Suite v4.2.1 - Portable Setup
 
 color 07
 set "LOG_DIR=%~1"
 if "%LOG_DIR%"=="" set "LOG_DIR=%TEMP%"
 set "LOG_FILE=%LOG_DIR%\pdf_optimizer_debug.log"
 
-echo Starting Portable Installation v4.1.1...
-echo --- SETUP LOG v4.1.1 START --- >> "%LOG_FILE%"
+echo Starting Portable Installation v4.2.1...
+echo --- SETUP LOG v4.2.1 START --- >> "%LOG_FILE%"
 
 :: 1. Python (Embedded - Skipped check)
 echo [1/3] Configuring Embedded Python...
@@ -48,4 +48,4 @@ echo [Finalizing] Registering Menu...
 call "%~dp0install\install.bat" "%LOG_FILE%" "%~2"
 
 echo Setup Finished.
-echo --- SETUP LOG v4.1.1 END --- >> "%LOG_FILE%"
+echo --- SETUP LOG v4.2.1 END --- >> "%LOG_FILE%"

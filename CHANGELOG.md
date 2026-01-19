@@ -1,3 +1,8 @@
+## [4.2.0] - 2026-01-19
+### Changed
+- **Architectural Simplification**: Removed intermediate VBS/BAT launchers. The context menu now invokes `pythonw.exe` directly, improving startup speed and ensuring 100% Unicode path support.
+- **Repository Cleanup**: Removed all legacy scripts and debug logs from the distribution.
+
 ## [4.0.0] - 2026-01-19
 ### Added
 - **Heavy Duty Processing**: Implemented page-by-page optimization architecture. Multi-page documents are now split into individual pages, processed with scientific filters, and merged back. This eliminates "out of memory" errors on large files at 300 DPI.

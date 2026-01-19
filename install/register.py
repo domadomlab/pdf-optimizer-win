@@ -29,7 +29,7 @@ def main():
     script_path = sys.argv[2]
     lang_code = sys.argv[4].upper()
 
-    print(f"--- Python Registry Setup v4.1.1 ---")
+    print(f"--- Python Registry Setup v4.2.0 ---")
     print(f"Python: {python_exe}")
     print(f"Script: {script_path}")
     print(f"Lang: {lang_code}")

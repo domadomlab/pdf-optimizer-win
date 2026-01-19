@@ -11,7 +11,6 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # --- CONFIGURATION & LOGGING ---
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-# Add embedded python paths to sys.path for standard library resolution
 sys.path.append(os.path.join(BASE_DIR, "resources", "python"))
 sys.path.append(BASE_DIR)
 
@@ -32,13 +31,7 @@ def log(message):
     try:
         with open(LOG_FILE, "a", encoding="utf-8") as f:
             f.write(f"[{timestamp}] {message}\n")
-    except:
-        # Fallback to temp directory
-        try:
-            temp_log = os.path.join(tempfile.gettempdir(), 'pdf_optimizer_fallback.log')
-            with open(temp_log, "a", encoding="utf-8") as f:
-                f.write(f"[{timestamp}] {message}\n")
-        except: pass
+    except: pass
 
 def log_error(e):
     log(f"CRITICAL ERROR: {str(e)}")
@@ -50,36 +43,33 @@ def format_size(size_bytes):
         size_bytes /= 1024.0
     return f"{size_bytes:.2f} TB"
 
-# --- Fake Scanners Database ---
-FAKE_SCANNERS = [
-    {"Producer": "HP LaserJet MFP M426fdw", "Creator": "HP Scan", "Author": "Scanner"},
-    {"Producer": "HP Color LaserJet Pro MFP M283fdw", "Creator": "HP Smart", "Author": "Administrator"},
-    {"Producer": "Canon iR-ADV C5535", "Creator": "Canon PDF Platform", "Author": ""},
-    {"Producer": "Canon MF Scan Utility", "Creator": "Canon MF643Cdw", "Author": "User"},
-    {"Producer": "Xerox WorkCentre 7845", "Creator": "Xerox WorkCentre", "Author": "Xerox"},
-    {"Producer": "Xerox VersaLink C405", "Creator": "Xerox MFP", "Author": "Scan"},
-    {"Producer": "Kyocera ECOSYS M2540dn", "Creator": "KM-4050 Scanner", "Author": "Scanner"},
-    {"Producer": "Brother MFC-L2710DW", "Creator": "Brother iPrint&Scan", "Author": ""},
-    {"Producer": "Epson Scan 2", "Creator": "EPSON Scan", "Author": ""},
+# --- Matched Scanner Profiles (Logic Integrity) ---
+SCANNER_PROFILES = [
+    {"Brand": "HP", "Producer": "HP LaserJet MFP M426fdw", "Creator": "HP Scan"},
+    {"Brand": "HP", "Producer": "HP Color LaserJet Pro MFP M283fdw", "Creator": "HP Smart"},
+    {"Brand": "Canon", "Producer": "Canon iR-ADV C5535", "Creator": "Canon PDF Platform"},
+    {"Brand": "Canon", "Producer": "Canon MF Scan Utility", "Creator": "Canon MF643Cdw"},
+    {"Brand": "Xerox", "Producer": "Xerox WorkCentre 7845", "Creator": "Xerox WorkCentre"},
+    {"Brand": "Xerox", "Producer": "Xerox VersaLink C405", "Creator": "Xerox MFP"},
+    {"Brand": "Kyocera", "Producer": "Kyocera ECOSYS M2540dn", "Creator": "KM-4050 Scanner"},
+    {"Brand": "Brother", "Producer": "Brother MFC-L2710DW", "Creator": "Brother iPrint&Scan"},
+    {"Brand": "Epson", "Producer": "Epson Scan 2", "Creator": "EPSON Scan"},
 ]
 
-def get_fake_metadata_args():
-    try:
-        profile = random.choice(FAKE_SCANNERS)
-        args = []
-        if profile["Producer"]: args.extend(["-define", f"pdf:Producer={profile['Producer']}"])
-        if profile["Creator"]: args.extend(["-define", f"pdf:Creator={profile['Creator']}"])
-        author = profile["Author"] if profile["Author"] else " "
-        args.extend(["-define", f"pdf:Author={author}"])
-        titles = ["Scanned Document", "Scan", "Doc", "Document", "Scan_2026", "CCF_0001"]
-        args.extend(["-define", f"pdf:Title={random.choice(titles)}"])
-        return args
-    except: return []
+def get_matched_metadata(profile):
+    args = []
+    args.extend(["-define", f"pdf:Producer={profile['Producer']}"])
+    args.extend(["-define", f"pdf:Creator={profile['Creator']}"])
+    
+    titles = ["Scanned Document", "Scan", "Doc", "Document", "Scan_2026", "CCF_0001"]
+    args.extend(["-define", f"pdf:Title={random.choice(titles)}"])
+    args.extend(["-define", "pdf:Author=Scanner"])
+    return args
 
 def find_ghostscript():
     gs = shutil.which("gswin64c") or shutil.which("gswin32c")
     if gs: return gs
-    pf = os.environ.get("ProgramFiles", "C:\\Program Files")
+    pf = os.environ.get("ProgramFiles", "C:\\ Program Files")
     gs_base = os.path.join(pf, "gs")
     if os.path.exists(gs_base):
         for folder in reversed(os.listdir(gs_base)):
@@ -92,7 +82,7 @@ def find_ghostscript():
 def find_magick():
     magick = shutil.which("magick")
     if magick: return magick
-    pf = os.environ.get("ProgramFiles", "C:\\Program Files")
+    pf = os.environ.get("ProgramFiles", "C:\\ Program Files")
     if os.path.exists(pf):
         for folder in os.listdir(pf):
             if "imagemagick" in folder.lower():
@@ -112,7 +102,6 @@ def get_page_count(magick_exe, file_path):
     return 1
 
 def process_single_page(page_idx, file_path, read_dpi, quality, im_limits, magick_exe, tmpdir, metadata_args):
-    """Worker function for parallel execution"""
     page_out = os.path.join(tmpdir, f"page_{page_idx:04d}.pdf")
     cmd = [magick_exe] + im_limits + [
            "-density", read_dpi, f"{file_path}[{page_idx}]", 
@@ -125,14 +114,10 @@ def process_single_page(page_idx, file_path, read_dpi, quality, im_limits, magic
     
     creation_flags = 0x08000000 if sys.platform == 'win32' else 0
     res = subprocess.run(cmd, capture_output=True, text=True, creationflags=creation_flags)
-    if res.returncode == 0 and os.path.exists(page_out):
-        return page_out
-    else:
-        raise Exception(f"Page {page_idx} failed: {res.stderr}")
+    return page_out if res.returncode == 0 and os.path.exists(page_out) else None
 
 def optimize_pdf(file_path, dpi):
-    log(f"--- SESSION START v4.1.1 (Turbo Pro): {file_path} ---")
-    
+    log(f"--- SESSION START v4.2.1 (Logic Fix): {file_path} ---")
     try:
         if not os.path.exists(file_path): return "Error: File missing."
         input_size = os.path.getsize(file_path)
@@ -143,7 +128,6 @@ def optimize_pdf(file_path, dpi):
     original_file_path = file_path
     temp_pdf_from_word = None
 
-    # --- WORD CONVERSION ---
     ext = os.path.splitext(file_path)[1].lower()
     if ext in ['.doc', '.docx']:
         converter_script = os.path.join(BASE_DIR, "src", "docx2pdf.vbs")
@@ -153,7 +137,7 @@ def optimize_pdf(file_path, dpi):
             creation_flags = 0x08000000 if sys.platform == 'win32' else 0
             subprocess.run(conv_cmd, capture_output=True, creationflags=creation_flags)
             if os.path.exists(temp_pdf_from_word): file_path = temp_pdf_from_word
-            else: return "Error: MS Word conversion failed."
+            else: return "Error: Word conversion failed."
         except Exception as e:
             log_error(e)
             return f"Error converting Word: {e}"
@@ -165,59 +149,43 @@ def optimize_pdf(file_path, dpi):
     page_count = get_page_count(magick_exe, file_path)
     output_path = f"{os.path.splitext(original_file_path)[0]}_{dpi}dpi.pdf"
     
-    # Adaptive limits: less memory per thread to avoid system lock
     im_limits = ["-limit", "memory", "512MiB", "-limit", "map", "1GiB", "-limit", "area", "256MiB"]
     quality = "40" if str(dpi) == "30" else "70"
     read_dpi = "150" if str(dpi) == "30" else str(dpi)
     
-    metadata_args = get_fake_metadata_args() # Chosen ONCE per document
+    # Selection of matched profile
+    profile = random.choice(SCANNER_PROFILES)
+    log(f"Applying Matched Profile: {profile['Brand']} ({profile['Producer']})")
+    metadata_args = get_matched_metadata(profile)
 
     success = False
     try:
         if page_count > 1:
             max_workers = os.cpu_count() or 4
-            log(f"Parallelizing {page_count} pages across {max_workers} threads.")
-            
             with tempfile.TemporaryDirectory() as tmpdir:
                 processed_pages_map = {}
                 with ThreadPoolExecutor(max_workers=max_workers) as executor:
                     futures = {executor.submit(process_single_page, i, file_path, read_dpi, quality, im_limits, magick_exe, tmpdir, metadata_args): i for i in range(page_count)}
                     for future in as_completed(futures):
                         idx = futures[future]
-                        try:
-                            page_path = future.result()
-                            processed_pages_map[idx] = page_path
-                        except Exception as e:
-                            log(f"Worker Error on page {idx}: {e}")
-                            return f"Worker Error: {e}"
+                        res_path = future.result()
+                        if res_path: processed_pages_map[idx] = res_path
+                        else: return f"Error on page {idx}"
 
                 sorted_pages = [processed_pages_map[i] for i in range(page_count)]
-                log("Merging pages using Ghostscript...")
                 merge_cmd = [gs_exe, "-dNOPAUSE", "-sDEVICE=pdfwrite", f"-sOUTPUTFILE={output_path}", "-dBATCH"] + sorted_pages
-                creation_flags = 0x08000000 if sys.platform == 'win32' else 0
-                res_merge = subprocess.run(merge_cmd, capture_output=True, text=True, creationflags=creation_flags)
+                res_merge = subprocess.run(merge_cmd, capture_output=True, text=True, creationflags=0x08000000)
                 if res_merge.returncode == 0: success = True
         else:
-            cmd = [magick_exe] + im_limits + [
-                   "-density", read_dpi, file_path, 
-                   "-alpha", "remove", "-alpha", "off", 
-                   "-filter", "Lanczos", "-distort", "Resize", "95%", 
-                   "-unsharp", "0x0.5",
-                   "-sampling-factor", "4:2:0", 
-                   "-compress", "jpeg", 
-                   "-quality", quality] + metadata_args + [output_path]
-            creation_flags = 0x08000000 if sys.platform == 'win32' else 0
-            res = subprocess.run(cmd, capture_output=True, creationflags=creation_flags)
+            cmd = [magick_exe] + im_limits + ["-density", read_dpi, file_path, "-alpha", "remove", "-alpha", "off", "-filter", "Lanczos", "-distort", "Resize", "95%", "-unsharp", "0x0.5", "-sampling-factor", "4:2:0", "-compress", "jpeg", "-quality", quality] + metadata_args + [output_path]
+            res = subprocess.run(cmd, capture_output=True, creationflags=0x08000000)
             if res.returncode == 0: success = True
 
         if success and os.path.exists(output_path):
             output_size = os.path.getsize(output_path)
-            diff = input_size - output_size
-            pct = (diff / input_size) * 100 if input_size > 0 else 0
-            log(f"FINAL SUCCESS: {format_size(output_size)}")
-            return f"Done! Reduced by {pct:.0f}% ({format_size(output_size)})"
-        else: return "Optimization failed."
-
+            pct = ((input_size - output_size) / input_size) * 100 if input_size > 0 else 0
+            return f"Done! Reduced by {pct:.0f}% ({format_size(output_size)})")
+        return "Optimization failed."
     except Exception as e:
         log_error(e)
         return str(e)

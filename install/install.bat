@@ -4,7 +4,7 @@ setlocal enabledelayedexpansion
 set "LOG_FILE=%~1"
 set "PROJECT_ROOT=%~dp0.."
 
-echo --- PORTABLE SETUP START v4.1.1 --- >> "!LOG_FILE!"
+echo --- PORTABLE SETUP START v4.2.1 --- >> "!LOG_FILE!"
 
 pushd "%PROJECT_ROOT%"
 set "PROJECT_ROOT=%CD%"
