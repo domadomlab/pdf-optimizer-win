@@ -1,63 +1,51 @@
-# PDF Optimizer Suite v3.8.4 🚀
+# PDF Optimizer Suite 🚀 v3.8.4
 
-[![Release](https://img.shields.io/github/v/release/domadomlab/pdf-optimizer-win?style=for-the-badge&color=blue)](https://github.com/domadomlab/pdf-optimizer-win/releases/latest)
-[![Platform](https://img.shields.io/badge/Platform-Windows%2010%2F11%2FLTSC-win?style=for-the-badge)](https://www.microsoft.com/windows)
-[![License](https://img.shields.io/github/license/domadomlab/pdf-optimizer-win?style=for-the-badge)](LICENSE)
+[🇷🇺 Русский](README.md) | [🇺🇸 English](README.en.md)
+
+---
 
 **The ultimate right-click tool for compressing PDFs and converting Word documents.**
-**Единственная утилита, которая делает всё через контекстное меню: сжимает PDF, конвертирует Word и защищает приватность.**
+**Идеальный инструмент контекстного меню для сжатия PDF и конвертации документов Word.**
 
 ---
 
-## 📂 Supported Formats / Поддерживаемые Файлы
+## ✨ Features / Возможности
 
-Just right-click any of these files to optimize:
-*   **📕 .PDF** (Portable Document Format) — Compress up to 90%.
-*   **📘 .DOCX** (Microsoft Word Modern) — Auto-convert to optimized PDF.
-*   **📘 .DOC** (Microsoft Word 97-2003) — Legacy support included.
+### 📈 Smart Compression / Умное Сжатие
+Drastically reduce file size (up to 90%) while maintaining print-ready quality.
+*Продвинутое сжатие PDF до 90% без потери читаемости.*
 
----
+### 🔄 Word Integration / Поддержка Word
+Convert `.doc` and `.docx` directly to optimized PDF via context menu (MS Word required).
+*Автоматическая конвертация Word в PDF прямо из проводника.*
 
-## 🦄 Why is this Unique? / В чем уникальность?
+### 🕵️ Camouflage & Privacy / Маскировка
+Strips real metadata and injects fake scanner signatures (HP, Canon, Xerox).
+*Очистка метаданных и имитация аппаратного скана для вашей приватности.*
 
-Most tools are either online (unsafe) or require heavy installation (Adobe). We are different:
-
-1.  **💼 True Portable Core (Portable Python)**
-    *   The suite carries its own **Embedded Python 3.12** engine.
-    *   **No Admin Rights** needed to run.
-    *   **Works on Corporate LTSC** versions where PowerShell is blocked.
-
-2.  **🕵️ Camouflage Mode (Privacy 2.0)**
-    *   We don't just delete metadata; we **fake** it.
-    *   Files look like scans from generic office hardware (HP, Canon, Xerox).
-    *   *Ваши файлы выглядят как сканы с принтера, скрывая реальный источник.*
-
-3.  **⚡ Zero-UI Workflow**
-    *   No windows to open. No buttons to click.
-    *   Everything happens in the background via the Right-Click Menu.
-    *   Silent System Tray notifications.
+### 🛡️ Corporate Ready / Для Корпораций
+Embedded Python 3.12 core. Runs on Windows LTSC without Admin rights or PowerShell dependency.
+*Портативный движок Python. Работает на заблокированных ПК и Windows LTSC.*
 
 ---
 
-## 📉 Compression Modes / Режимы Сжатия
+## 📉 Presets / Режимы Сжатия
 
-| Mode | DPI | Target Use Case | Size Reduction |
-| :--- | :--- | :--- | :--- |
-| **Eco** | 75 | Messengers, Archives | ~85-95% |
-| **Email** | 150 | Email Attachments (Standard) | ~60-80% |
-| **Print** | 200 | Office Printing | ~40-60% |
-| **High** | 300 | High-Quality Scans | ~10-25% |
+| Mode | DPI | Size Reduction |
+| :--- | :--- | :--- |
+| **Eco** | 75 | ~85-95% |
+| **Email** | 150 | ~60-80% |
+| **Print** | 200 | ~40-60% |
+| **High** | 300 | ~10-25% |
 
 ---
 
-## 🚀 Installation / Установка
+## 🛠 Installation / Установка
 
 1.  Download **[PDF_Optimizer_Suite_v3.8.4_Installer.exe](https://github.com/domadomlab/pdf-optimizer-win/releases/latest)**.
-2.  Run the installer (it will extract the portable engine to `Program Files` or `AppData`).
-3.  Right-click any file to start using it!
-
-*Note for Word files: Microsoft Word (2010+) must be installed on the system for conversion to work.*
+2.  Run the installer (extracts portable engine).
+3.  Right-click any PDF or Word file to start.
 
 ---
 
-*(c) 2026 DomCorp. Open Source under MIT License.*
+*(c) 2026 DomCorp. Licensed under MIT.*
