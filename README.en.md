@@ -1,5 +1,9 @@
 # PDF Optimizer Suite 🚀 v4.3.0 LTS
 
+<p align="center">
+  <img src="resources/logo.png" width="400" alt="PDF Optimizer Suite Logo">
+</p>
+
 **The ultimate right-click tool for compressing PDFs and converting Word documents.**
 
 ---
