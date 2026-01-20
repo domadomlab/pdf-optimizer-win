@@ -69,8 +69,7 @@ def check_disk_space(required_mb=500, path="."):
         except: return True # Fail open if check fails
     return True
 
-def get_available_memory_mb():
-    try:
+def log_memory_stats():    try:
         class MEMORYSTATUSEX(ctypes.Structure):
             _fields_ = [
                 ("dwLength", ctypes.c_ulong),
@@ -86,9 +85,22 @@ def get_available_memory_mb():
         stat = MEMORYSTATUSEX()
         stat.dwLength = ctypes.sizeof(MEMORYSTATUSEX)
         ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(stat))
-        return stat.ullAvailPhys / (1024 * 1024)
-    except: 
-        return 4096 # Assume 4GB if check fails
+        
+        total_mb = stat.ullTotalPhys / (1024 * 1024)
+        avail_mb = stat.ullAvailPhys / (1024 * 1024)
+        used_mb = total_mb - avail_mb
+        percent = stat.dwMemoryLoad
+        
+        # ASCII Graphics
+        bar_len = 20
+        filled = int((percent / 100) * bar_len)
+        bar = "█" * filled + "░" * (bar_len - filled)
+        
+        log(f"RAM: [{bar}] {percent}% | Used: {used_mb:.0f}MB / Total: {total_mb:.0f}MB | Free: {avail_mb:.0f}MB")
+        return avail_mb
+    except:
+        log("RAM: [Unknown] (Check failed)")
+        return 4096
 
 # --- Matched Global Scanner Profiles 2024-2025 ---
 SCANNER_PROFILES = [
@@ -212,8 +224,8 @@ def optimize_pdf(file_path, dpi):
     final_output_path = f"{os.path.splitext(original_file_path)[0]}_{{dpi}}dpi.pdf"
     
     # 2. Adaptive Resource Management
-    avail_mem = get_available_memory_mb()
-    log(f"Available RAM: {avail_mem:.0f} MB")
+    # avail_mem = get_available_memory_mb() # Deprecated
+    avail_mem = log_memory_stats()
     
     if avail_mem < 2048:
         max_workers = 1
