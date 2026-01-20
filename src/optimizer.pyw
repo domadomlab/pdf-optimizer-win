@@ -161,9 +161,9 @@ def get_page_count(magick_exe, file_path):
     return 1
 
 def process_single_page(page_idx, file_path, read_dpi, quality, im_limits, magick_exe, tmpdir, metadata_args):
-    page_out = os.path.join(tmpdir, f"page_{{page_idx:04d}}.pdf")
+    page_out = os.path.join(tmpdir, f"page_{page_idx:04d}.pdf")
     cmd = [magick_exe] + im_limits + [
-           "-density", read_dpi, f"{file_path}[{{page_idx}}]", 
+           "-density", read_dpi, f"{file_path}[{page_idx}]", 
            "-alpha", "remove", "-alpha", "off", 
            "-filter", "Lanczos", "-distort", "Resize", "95%", 
            "-unsharp", "0x0.5",
@@ -209,7 +209,7 @@ def optimize_pdf(file_path, dpi):
     ext = os.path.splitext(file_path)[1].lower()
     if ext in ['.doc', '.docx']:
         converter_script = os.path.join(BASE_DIR, "src", "docx2pdf.vbs")
-        temp_pdf_from_word = os.path.join(os.path.dirname(file_path), f"~temp_{{os.path.basename(file_path)}}.pdf")
+        temp_pdf_from_word = os.path.join(os.path.dirname(file_path), f"~temp_{os.path.basename(file_path)}.pdf")
         try:
             conv_cmd = ["cscript", "//NoLogo", converter_script, file_path, temp_pdf_from_word]
             creation_flags = 0x08000000 if sys.platform == 'win32' else 0
