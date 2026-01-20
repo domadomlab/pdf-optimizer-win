@@ -69,7 +69,8 @@ def check_disk_space(required_mb=500, path="."):
         except: return True # Fail open if check fails
     return True
 
-def log_memory_stats():    try:
+def log_memory_stats():
+    try:
         class MEMORYSTATUSEX(ctypes.Structure):
             _fields_ = [
                 ("dwLength", ctypes.c_ulong),
@@ -173,12 +174,17 @@ def process_single_page(page_idx, file_path, read_dpi, quality, im_limits, magic
     creation_flags = 0x08000000 if sys.platform == 'win32' else 0
     try:
         res = subprocess.run(cmd, capture_output=True, text=True, creationflags=creation_flags, timeout=PAGE_TIMEOUT)
-        return page_out if res.returncode == 0 and os.path.exists(page_out) else None
+        if res.returncode != 0:
+            log(f"Page {page_idx} Error - Command: {' '.join(cmd)}")
+            log(f"Page {page_idx} Error - Stdout: {res.stdout.strip()}")
+            log(f"Page {page_idx} Error - Stderr: {res.stderr.strip()}")
+            return None
+        return page_out if os.path.exists(page_out) else None
     except subprocess.TimeoutExpired:
-        log(f"Timeout processing page {page_idx}")
+        log(f"Page {page_idx} Timeout - Command: {' '.join(cmd)}")
         return None
     except Exception as e:
-        log(f"Error processing page {page_idx}: {e}")
+        log(f"Page {page_idx} Exception: {str(e)} - Command: {' '.join(cmd)}")
         return None
 
 def optimize_pdf(file_path, dpi):
@@ -207,11 +213,26 @@ def optimize_pdf(file_path, dpi):
         try:
             conv_cmd = ["cscript", "//NoLogo", converter_script, file_path, temp_pdf_from_word]
             creation_flags = 0x08000000 if sys.platform == 'win32' else 0
-            subprocess.run(conv_cmd, capture_output=True, creationflags=creation_flags, timeout=WORD_TIMEOUT)
+            
+            # Explicitly kill Word processes after timeout if they are still running
+            word_proc = subprocess.Popen(conv_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, creationflags=creation_flags)
+            try:
+                stdout, stderr = word_proc.communicate(timeout=WORD_TIMEOUT)
+                if word_proc.returncode != 0:
+                    log(f"Word Conversion Error - Command: {' '.join(conv_cmd)}")
+                    log(f"Word Conversion Error - Stdout: {stdout.decode(errors="ignore").strip()}")
+                    log(f"Word Conversion Error - Stderr: {stderr.decode(errors="ignore").strip()}")
+                    return "Error: Word conversion failed."
+            except subprocess.TimeoutExpired:
+                log(f"Word Conversion Timeout - Command: {' '.join(conv_cmd)}")
+                word_proc.kill()
+                stdout, stderr = word_proc.communicate() # Get remaining output
+                log(f"Word Conversion Timeout - Stdout: {stdout.decode(errors="ignore").strip()}")
+                log(f"Word Conversion Timeout - Stderr: {stderr.decode(errors="ignore").strip()}")
+                return "Error: Word conversion timed out."
+            
             if os.path.exists(temp_pdf_from_word): file_path = temp_pdf_from_word
-            else: return "Error: Word conversion failed."
-        except subprocess.TimeoutExpired:
-             return "Error: Word conversion timeout."
+            else: return "Error: Word conversion failed (output not found)."
         except Exception as e:
             log_error(e)
             return f"Error converting Word: {e}"
@@ -267,12 +288,36 @@ def optimize_pdf(file_path, dpi):
 
                 sorted_pages = [processed_pages_map[i] for i in range(page_count)]
                 merge_cmd = [gs_exe, "-dNOPAUSE", "-sDEVICE=pdfwrite", f"-sOUTPUTFILE={temp_output}", "-dBATCH"] + sorted_pages
-                res_merge = subprocess.run(merge_cmd, capture_output=True, text=True, creationflags=0x08000000, timeout=MERGE_TIMEOUT)
-                if res_merge.returncode == 0: success = True
+                try:
+                    res_merge = subprocess.run(merge_cmd, capture_output=True, text=True, creationflags=0x08000000, timeout=MERGE_TIMEOUT)
+                    if res_merge.returncode != 0:
+                        log(f"Merge Error - Command: {' '.join(merge_cmd)}")
+                        log(f"Merge Error - Stdout: {res_merge.stdout.strip()}")
+                        log(f"Merge Error - Stderr: {res_merge.stderr.strip()}")
+                        return "Error: Merging pages failed."
+                    success = True
+                except subprocess.TimeoutExpired:
+                    log(f"Merge Timeout - Command: {' '.join(merge_cmd)}")
+                    return "Error: Merging pages timed out."
+                except Exception as e:
+                    log(f"Merge Exception: {str(e)} - Command: {' '.join(merge_cmd)}")
+                    return "Error: Merging pages exception."
         else:
             cmd = [magick_exe] + im_limits + ["-density", read_dpi, add_long_path_prefix(file_path), "-alpha", "remove", "-alpha", "off", "-filter", "Lanczos", "-distort", "Resize", "95%", "-unsharp", "0x0.5", "-sampling-factor", "4:2:0", "-compress", "jpeg", "-quality", quality] + metadata_args + [temp_output]
-            res = subprocess.run(cmd, capture_output=True, creationflags=0x08000000, timeout=PAGE_TIMEOUT)
-            if res.returncode == 0: success = True
+            try:
+                res = subprocess.run(cmd, capture_output=True, creationflags=0x08000000, timeout=PAGE_TIMEOUT)
+                if res.returncode != 0:
+                    log(f"Single Page Error - Command: {' '.join(cmd)}")
+                    log(f"Single Page Error - Stdout: {res.stdout.decode(errors="ignore").strip()}") # Decode for safety
+                    log(f"Single Page Error - Stderr: {res.stderr.decode(errors="ignore").strip()}") # Decode for safety
+                    return "Error: Single page optimization failed."
+                success = True
+            except subprocess.TimeoutExpired:
+                log(f"Single Page Timeout - Command: {' '.join(cmd)}")
+                return "Error: Single page optimization timed out."
+            except Exception as e:
+                log(f"Single Page Exception: {str(e)} - Command: {' '.join(cmd)}")
+                return "Error: Single page optimization exception."
 
         # 3. Atomic Write
         if success and os.path.exists(temp_output):
