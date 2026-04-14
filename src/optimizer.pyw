@@ -187,8 +187,8 @@ def process_single_page(page_idx, file_path, read_dpi, quality, im_limits, magic
         log(f"Page {page_idx} Exception: {str(e)} - Command: {' '.join(cmd)}")
         return None
 
-def optimize_pdf(file_path, dpi):
-    log(f"--- SESSION START v4.4.0 (Industrial): {file_path} ---")
+def optimize_pdf(file_path, dpi, keep_format=False):
+    log(f"--- SESSION START v4.5.0 (Industrial): {file_path} (Mode: {'IMG' if keep_format else 'PDF'}) ---")
     try:
         file_path = os.path.abspath(file_path)
         if not os.path.exists(file_path): return "Error: File missing."
@@ -205,9 +205,12 @@ def optimize_pdf(file_path, dpi):
     original_file_path = file_path
     temp_pdf_from_word = None
 
-    # Word Conversion with Timeout
+    # Word/Image Handling
     ext = os.path.splitext(file_path)[1].lower()
+    is_image = ext in [".jpg", ".jpeg", ".png", ".bmp", ".tiff", ".tif"]
+
     if ext in ['.doc', '.docx']:
+        if keep_format: return "Error: Word files must be converted to PDF."
         converter_script = os.path.join(BASE_DIR, "src", "docx2pdf.vbs")
         temp_pdf_from_word = os.path.join(os.path.dirname(file_path), f"~temp_{os.path.basename(file_path)}.pdf")
         try:
@@ -220,15 +223,15 @@ def optimize_pdf(file_path, dpi):
                 stdout, stderr = word_proc.communicate(timeout=WORD_TIMEOUT)
                 if word_proc.returncode != 0:
                     log(f"Word Conversion Error - Command: {' '.join(conv_cmd)}")
-                    log(f"Word Conversion Error - Stdout: {stdout.decode(errors="ignore").strip()}")
-                    log(f"Word Conversion Error - Stderr: {stderr.decode(errors="ignore").strip()}")
+                    log(f"Word Conversion Error - Stdout: {stdout.decode(errors='ignore').strip()}")
+                    log(f"Word Conversion Error - Stderr: {stderr.decode(errors='ignore').strip()}")
                     return "Error: Word conversion failed."
             except subprocess.TimeoutExpired:
                 log(f"Word Conversion Timeout - Command: {' '.join(conv_cmd)}")
                 word_proc.kill()
                 stdout, stderr = word_proc.communicate() # Get remaining output
-                log(f"Word Conversion Timeout - Stdout: {stdout.decode(errors="ignore").strip()}")
-                log(f"Word Conversion Timeout - Stderr: {stderr.decode(errors="ignore").strip()}")
+                log(f"Word Conversion Timeout - Stdout: {stdout.decode(errors='ignore').strip()}")
+                log(f"Word Conversion Timeout - Stderr: {stderr.decode(errors='ignore').strip()}")
                 return "Error: Word conversion timed out."
             
             if os.path.exists(temp_pdf_from_word): file_path = temp_pdf_from_word
@@ -242,10 +245,14 @@ def optimize_pdf(file_path, dpi):
     if not gs_exe or not magick_exe: return "Error: External tools missing."
 
     page_count = get_page_count(magick_exe, file_path)
-    final_output_path = f"{os.path.splitext(original_file_path)[0]}_{{dpi}}dpi.pdf"
+    
+    if keep_format:
+        # Use .jpg extension even for temporary to force ImageMagick format
+        final_output_path = f"{os.path.splitext(original_file_path)[0]}_optimized{ext}"
+    else:
+        final_output_path = f"{os.path.splitext(original_file_path)[0]}_{dpi}dpi.pdf"
     
     # 2. Adaptive Resource Management
-    # avail_mem = get_available_memory_mb() # Deprecated
     avail_mem = log_memory_stats()
     
     if avail_mem < 2048:
@@ -275,7 +282,7 @@ def optimize_pdf(file_path, dpi):
     temp_output = f"{final_output_path}.tmp"
 
     try:
-        if page_count > 1:
+        if page_count > 1 and not keep_format:
             with tempfile.TemporaryDirectory() as tmpdir:
                 processed_pages_map = {}
                 with ThreadPoolExecutor(max_workers=max_workers) as executor:
@@ -303,21 +310,34 @@ def optimize_pdf(file_path, dpi):
                     log(f"Merge Exception: {str(e)} - Command: {' '.join(merge_cmd)}")
                     return "Error: Merging pages exception."
         else:
-            cmd = [magick_exe] + im_limits + ["-density", read_dpi, add_long_path_prefix(file_path), "-alpha", "remove", "-alpha", "off", "-filter", "Lanczos", "-distort", "Resize", "95%", "-unsharp", "0x0.5", "-sampling-factor", "4:2:0", "-compress", "jpeg", "-quality", quality] + metadata_args + [temp_output]
+            # Single page or Image Keep Format
+            input_spec = add_long_path_prefix(file_path)
+            if not is_image:
+                input_spec += "[0]"
+                
+            if keep_format:
+                # Optimized image processing. Force output format by prefixing with extension
+                fmt = ext.strip('.')
+                if fmt == 'jpg': fmt = 'jpeg'
+                output_spec = f"{fmt}:{temp_output}"
+                cmd = [magick_exe] + im_limits + [input_spec, "-alpha", "remove", "-alpha", "off", "-filter", "Lanczos", "-distort", "Resize", "95%", "-unsharp", "0x0.5", "-sampling-factor", "4:2:0", "-quality", quality, output_spec]
+            else:
+                cmd = [magick_exe] + im_limits + ["-density", read_dpi, input_spec, "-alpha", "remove", "-alpha", "off", "-filter", "Lanczos", "-distort", "Resize", "95%", "-unsharp", "0x0.5", "-sampling-factor", "4:2:0", "-compress", "jpeg", "-quality", quality] + metadata_args + [temp_output]
+            
             try:
                 res = subprocess.run(cmd, capture_output=True, creationflags=0x08000000, timeout=PAGE_TIMEOUT)
                 if res.returncode != 0:
-                    log(f"Single Page Error - Command: {' '.join(cmd)}")
-                    log(f"Single Page Error - Stdout: {res.stdout.decode(errors="ignore").strip()}") # Decode for safety
-                    log(f"Single Page Error - Stderr: {res.stderr.decode(errors="ignore").strip()}") # Decode for safety
-                    return "Error: Single page optimization failed."
+                    log(f"Single Process Error - Command: {' '.join(cmd)}")
+                    log(f"Single Process Error - Stdout: {res.stdout.decode(errors='ignore').strip()}")
+                    log(f"Single Process Error - Stderr: {res.stderr.decode(errors='ignore').strip()}")
+                    return "Error: Optimization failed."
                 success = True
             except subprocess.TimeoutExpired:
-                log(f"Single Page Timeout - Command: {' '.join(cmd)}")
-                return "Error: Single page optimization timed out."
+                log(f"Process Timeout - Command: {' '.join(cmd)}")
+                return "Error: Optimization timed out."
             except Exception as e:
-                log(f"Single Page Exception: {str(e)} - Command: {' '.join(cmd)}")
-                return "Error: Single page optimization exception."
+                log(f"Process Exception: {str(e)} - Command: {' '.join(cmd)}")
+                return "Error: Optimization exception."
 
         # 3. Atomic Write
         if success and os.path.exists(temp_output):
@@ -354,8 +374,12 @@ def show_notification(title, message):
 
 def main():
     if len(sys.argv) < 3: return
+    mode = 'pdf'
+    if len(sys.argv) >= 4:
+        mode = sys.argv[3].lower()
+    
     try:
-        res = optimize_pdf(sys.argv[2], sys.argv[1])
+        res = optimize_pdf(sys.argv[2], sys.argv[1], keep_format=(mode == 'img'))
         show_notification("PDF Optimizer Suite", res)
     except Exception as e: log_error(e)
 
