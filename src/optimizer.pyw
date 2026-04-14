@@ -169,7 +169,7 @@ def process_single_page(page_idx, file_path, read_dpi, quality, im_limits, magic
            "-unsharp", "0x0.5",
            "-sampling-factor", "4:2:0", 
            "-compress", "jpeg", 
-           "-quality", quality] + metadata_args + [page_out]
+           "-quality", quality] + metadata_args + [f"pdf:{page_out}"]
     
     creation_flags = 0x08000000 if sys.platform == 'win32' else 0
     try:
@@ -188,7 +188,7 @@ def process_single_page(page_idx, file_path, read_dpi, quality, im_limits, magic
         return None
 
 def optimize_pdf(file_path, dpi, keep_format=False):
-    log(f"--- SESSION START v4.5.0 (Industrial): {file_path} (Mode: {'IMG' if keep_format else 'PDF'}) ---")
+    log(f"--- SESSION START v4.5.2 (Industrial): {file_path} (Mode: {'IMG' if keep_format else 'PDF'}) ---")
     try:
         file_path = os.path.abspath(file_path)
         if not os.path.exists(file_path): return "Error: File missing."
@@ -247,7 +247,6 @@ def optimize_pdf(file_path, dpi, keep_format=False):
     page_count = get_page_count(magick_exe, file_path)
     
     if keep_format:
-        # Use .jpg extension even for temporary to force ImageMagick format
         final_output_path = f"{os.path.splitext(original_file_path)[0]}_optimized{ext}"
     else:
         final_output_path = f"{os.path.splitext(original_file_path)[0]}_{dpi}dpi.pdf"
@@ -294,6 +293,7 @@ def optimize_pdf(file_path, dpi, keep_format=False):
                         else: return f"Error on page {idx}"
 
                 sorted_pages = [processed_pages_map[i] for i in range(page_count)]
+                # Ghostscript usually handles .tmp fine, but -sDEVICE=pdfwrite is explicit
                 merge_cmd = [gs_exe, "-dNOPAUSE", "-sDEVICE=pdfwrite", f"-sOUTPUTFILE={temp_output}", "-dBATCH"] + sorted_pages
                 try:
                     res_merge = subprocess.run(merge_cmd, capture_output=True, text=True, creationflags=0x08000000, timeout=MERGE_TIMEOUT)
@@ -316,13 +316,14 @@ def optimize_pdf(file_path, dpi, keep_format=False):
                 input_spec += "[0]"
                 
             if keep_format:
-                # Optimized image processing. Force output format by prefixing with extension
                 fmt = ext.strip('.')
                 if fmt == 'jpg': fmt = 'jpeg'
                 output_spec = f"{fmt}:{temp_output}"
                 cmd = [magick_exe] + im_limits + [input_spec, "-alpha", "remove", "-alpha", "off", "-filter", "Lanczos", "-distort", "Resize", "95%", "-unsharp", "0x0.5", "-sampling-factor", "4:2:0", "-quality", quality, output_spec]
             else:
-                cmd = [magick_exe] + im_limits + ["-density", read_dpi, input_spec, "-alpha", "remove", "-alpha", "off", "-filter", "Lanczos", "-distort", "Resize", "95%", "-unsharp", "0x0.5", "-sampling-factor", "4:2:0", "-compress", "jpeg", "-quality", quality] + metadata_args + [temp_output]
+                # IMPORTANT: Use pdf: prefix for .tmp files to ensure PDF format
+                output_spec = f"pdf:{temp_output}"
+                cmd = [magick_exe] + im_limits + ["-density", read_dpi, input_spec, "-alpha", "remove", "-alpha", "off", "-filter", "Lanczos", "-distort", "Resize", "95%", "-unsharp", "0x0.5", "-sampling-factor", "4:2:0", "-compress", "jpeg", "-quality", quality] + metadata_args + [output_spec]
             
             try:
                 res = subprocess.run(cmd, capture_output=True, creationflags=0x08000000, timeout=PAGE_TIMEOUT)
@@ -343,7 +344,7 @@ def optimize_pdf(file_path, dpi, keep_format=False):
         if success and os.path.exists(temp_output):
              if os.path.exists(final_output_path):
                  try: os.remove(final_output_path)
-                 except: pass # Will fail if file is locked, but rename might still fail
+                 except: pass
              os.rename(temp_output, final_output_path)
              
              output_size = os.path.getsize(final_output_path)
